@@ -1,0 +1,27 @@
+{
+  "extensionName": {
+    "message": "Railduino Zeroconf Lookup",
+    "description": "Name of the extension."
+  },
+
+  "extensionDescription": {
+    "message": "Finde HTTP Server im lokalen Netzwerk mit Zeroconf",
+    "description": "Description of the extension."
+  },
+
+  "popupTitle": {
+    "message": "Railduino Zeroconf Lookup",
+    "description": "Tooltip for the toolbar button."
+  },
+
+  "htmlHeader": {
+    "message": "Lokale HTTP Server",
+    "description": "Popup window <h3> header"
+  },
+
+  "htmlCancel": {
+    "message": "Abbrechen (Esc geht auch)",
+    "description": "Popup window Cancel link"
+  }
+}
+

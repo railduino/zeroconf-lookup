@@ -1,0 +1,11 @@
+# Ignore C object and executable files
+*.o
+*.a
+*.so
+*.patch
+tags
+*.orig
+zeroconf_lookup
+
+# Ignore vim swap files
+*.swp
