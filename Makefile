@@ -7,3 +7,6 @@
 doc:
 	pandoc -f odt -t markdown -o README.md README.odt
 
+firefox:
+	cd Firefox && zip -r -FS ../railduino-zeroconf-lookup.zip *
+
