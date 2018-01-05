@@ -67,7 +67,10 @@ The extension has been submitted to the AMO website
 (<https://addons.mozilla.org/>). Until is has been approved,
 installation can only be done in debugging mode. See
 <https://developer.mozilla.org/en-US/Add-ons/WebExtensions/WebExtensions_and_the_Add-on_ID#Basic_workflow_with_no_add-on_ID>
-for an explanation hot to install the extension in debugging mode.
+for an explanation how to install. The Firefox directory within the
+local copy of the repository is the location that needs to be loaded.
+The manifest there includes the path that has been setup with the
+**make** command for the host application above.
 
 Contributing to this repository
 -------------------------------
