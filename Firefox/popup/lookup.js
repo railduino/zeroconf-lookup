@@ -14,12 +14,11 @@ function onResponse(response) {
   var server_list = document.getElementById("server_list");
   server_list.innerHTML = "";
 
-  var i, server, name, a, tab, hr, br, span, txt;
+  var i, server, a, hr, br, span;
   for (i in response.result) {
     server = response.result[i];
     a = document.createElement('a');
-    name = document.createTextNode(server.name);
-    a.appendChild(name);
+    a.textContent = server.name;
     a.href = server.url;
     a.classList.add("server", "button");
     server_list.appendChild(a);
@@ -27,8 +26,7 @@ function onResponse(response) {
       br = document.createElement('br');
       server_list.appendChild(br);
       span = document.createElement('span');
-      txt = document.createTextNode(server.txt);
-      span.appendChild(txt);
+      span.textContent = server.txt;
       server_list.appendChild(span);
     }
     hr = document.createElement('hr');
@@ -50,14 +48,15 @@ function onResponse(response) {
   }, false);
 }
 
-var elem, text;
+var elem;
 elem = document.getElementById("header");
-text = browser.i18n.getMessage("htmlHeader");
-elem.innerHTML = text;
+elem.textContent = browser.i18n.getMessage("htmlHeader");
+
+elem = document.getElementById("waiting");
+elem.textContent = browser.i18n.getMessage("htmlWaiting");
 
 elem = document.getElementById("cancel");
-text = browser.i18n.getMessage("htmlCancel");
-elem.innerHTML = text;
+elem.textContent = browser.i18n.getMessage("htmlCancel");
 elem.onclick = function() { window.close(); };
 
 var sending = browser.runtime.sendNativeMessage("com.railduino.zeroconf_lookup", "Lookup");

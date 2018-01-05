@@ -19,6 +19,11 @@
     "description": "Popup window header text"
   },
 
+  "htmlWaiting": {
+    "message": "Waiting for responses",
+    "description": "Display while waiting for responses"
+  },
+
   "htmlCancel": {
     "message": "Cancel (or press Esc)",
     "description": "Popup window Cancel link"
