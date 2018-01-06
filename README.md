@@ -63,9 +63,10 @@ Connection-based messaging. A possible hint can be found under
 Installation – Firefox WebExtension
 -----------------------------------
 
-The extension has been submitted to the AMO website
-(<https://addons.mozilla.org/>). Until is has been approved,
-installation can only be done in debugging mode. See
+The extension is available for production from
+<https://addons.mozilla.org/en-US/firefox/addon/railduino-zeroconf-lookup/>
+and has been approved by the Firefox add-ons Team. It can also been
+installed in debugging mode from the Git repository. See
 <https://developer.mozilla.org/en-US/Add-ons/WebExtensions/WebExtensions_and_the_Add-on_ID#Basic_workflow_with_no_add-on_ID>
 for an explanation how to install. The Firefox directory within the
 local copy of the repository is the location that needs to be loaded.
