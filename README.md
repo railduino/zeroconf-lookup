@@ -16,7 +16,7 @@ leading the way and Firefox following suit.
 NativeMessaging requires an independent host application. This
 application needs to be installed independently from the browser by
 means of the operating system. The browser will nevertheless invoke and
-terminate this application.
+terminate this application as needed.
 
 Purpose of this repository
 --------------------------
@@ -60,8 +60,8 @@ the one for Chrome) in the standard location.
 If Avahi ist available, the answers usually return immediately, because
 the ***avahi‑daemon*** maintains current state. Otherwise the program
 waits for 3 seconds and returns all collected answers. So far, I have
-not been able to use Connection-based messaging. A possible hint can be
-found under
+not been able to use connection-based messaging, only connectionless. A
+possible hint can be found under
 <https://discourse.mozilla.org/t/connection-based-native-messaging-doesnt-work-in-popups/17185>
 
 The C program sends Log output to the ***syslog(3)*** ***USER***
@@ -78,23 +78,23 @@ The first one found is used, so locations cannot be mixed.
 
 The three variables and their default value are:
 
-> **timeout=3\
-> **The timeout if the built-in mDNS-SD discovery is used, i.e. Avahi is
-> not found or not used. The number must be in the range from 1 to 9.
+**timeout=3\
+***The timeout if the built-in mDNS-SD discovery is used, i.e. Avahi is
+not found or not used. This number must be in the range from 1 to 9.*
 
-> **avahi=1\
-> **Use Avahi if available and. Disable Avahi browsing by setting to 0.
-> A sub-process is forked and **avahi-browse** ist called with the
-> following command line:\
-> ***avahi-browse --resolve --parsable --no-db-lookup --terminate
-> \_http.\_tcp 2&gt;/dev/null***
+**avahi=1\
+***Use Avahi if available and. Disable Avahi browsing by setting to 0. A
+sub-process is forked and **avahi-browse** ist called with the following
+command line:\
+**avahi-browse --resolve --parsable --no-db-lookup --terminate
+\_http.\_tcp 2&gt;/dev/null***
 
-> **debug=0\
-> **Debugging is enabled setting this value to 1.
+**debug=0\
+***Debugging is enabled setting this value to 1.*
 
 An example configuration file is included in the repository called
-***zeroconf\_lookup.conf.example***. It enabled debugging. The following
-locations are checked in descending order:
+***zeroconf\_lookup.conf.example***. It enables debugging and disables
+Avahi usage. The following locations are checked in descending order:
 
 1.  An environment variable called ***ZEROCONF\_LOOKUP***\
     Example: ***ZEROCONF\_LOOKUP=”avahi=0;debug=1”***
@@ -109,7 +109,7 @@ Installation – Firefox WebExtension
 
 The extension is available for production from
 <https://addons.mozilla.org/en-US/firefox/addon/railduino-zeroconf-lookup/>
-and has been approved by the Firefox add-ons Team. It can also been
+and has been approved by the Firefox add-ons Team. It can also be
 installed in debugging mode from the Git repository. See
 <https://developer.mozilla.org/en-US/Add-ons/WebExtensions/WebExtensions_and_the_Add-on_ID#Basic_workflow_with_no_add-on_ID>
 for an explanation how to install. The Firefox directory within the
