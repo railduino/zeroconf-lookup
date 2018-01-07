@@ -1,22 +1,26 @@
 /****************************************************************************
  *
- * Copyright (c) 2017 Volker Wiegand <volker@railduino.de>
+ * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
  *
- *   Zeroconf-Lookup is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published
- *   by the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *   Zeroconf-Lookup is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *   See the GNU Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- *   You should have received a copy of the GNU Lesser General Public
- *   License along with Zeroconf-Lookup.
- *   If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  ****************************************************************************/
 
@@ -141,12 +145,12 @@ util_close_log(void)
 
 
 void
-util_set_log(char *ident, int debug)
+util_set_log(char *ident)
 {
 	openlog(ident, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_USER);
 	atexit(util_close_log);
 
-	if (debug == 0) {
+	if (config_use_debug() == 0) {
 		setlogmask(LOG_UPTO(LOG_INFO));
 	}
 
@@ -236,49 +240,5 @@ util_fatal(char *fmt, ...)
 	fprintf(stderr, "FATAL: %s\n", buffer);
 
 	exit(EXIT_FAILURE);
-}
-
-
-int
-util_get_timeout(char *argv0, int value)
-{
-	char config[FILENAME_MAX], *ptr;
-	FILE *fp = NULL;
-	int count, result;
-
-	if ((ptr = getenv("ZEROCONF_LOOKUP")) != NULL) {
-		fp = fopen(ptr, "r");
-	}
-	if (fp == NULL && (ptr = getenv("HOME")) != NULL) {
-		UTIL_STRCPY(config, ptr);
-		UTIL_STRCAT(config, "/zeroconf_lookup.conf");
-		ptr = config;
-		fp = fopen(ptr, "r");
-	}
-	if (fp == NULL) {
-		ptr = "/etc/zeroconf_lookup.conf";
-		fp = fopen(ptr, "r");
-	}
-	if (fp == NULL) {
-		UTIL_STRCPY(config, argv0);
-		UTIL_STRCAT(config, ".conf");
-		ptr = config;
-		fp = fopen(ptr, "r");
-	}
-	if (fp == NULL) {
-		util_debug("timeout %d (no config)", value);
-		return value;
-	}
-
-	count = fscanf(fp, "%d", &result);
-	fclose(fp);
-
-	if (count == 1 && result > 0 && result < 10) {
-		util_debug("timeout %d (%s)", result, ptr);
-		return result;
-	}
-
-	util_debug("timeout %d (bad config)", value);
-	return value;
 }
 

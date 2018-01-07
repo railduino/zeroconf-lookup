@@ -1,22 +1,26 @@
 /****************************************************************************
  *
- * Copyright (c) 2017 Volker Wiegand <volker@railduino.de>
+ * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
  *
- *   Zeroconf-Lookup is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published
- *   by the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *   Zeroconf-Lookup is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *   See the GNU Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- *   You should have received a copy of the GNU Lesser General Public
- *   License along with Zeroconf-Lookup.
- *   If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  ****************************************************************************/
 
@@ -36,13 +40,13 @@
 #define MDNS_PORT	5353
 
 
-static int  mdnssd_sock = 0;
+static int  my_sock = 0;
 static char answer[MDNS_SIZE];
 static result_t *results;
 
 
 static void
-mdnssd_read_answer(int json)
+mdnssd_read_answer(void)
 {
 	char buf[MDNS_SIZE], url[MDNS_SIZE];
 	struct sockaddr_storage addr;
@@ -54,7 +58,7 @@ mdnssd_read_answer(int json)
 	result_t *result;
 
 	len = sizeof(addr);
-	cnt = recvfrom(mdnssd_sock, buf, sizeof(buf), 0, (struct sockaddr *) &addr, &len);
+	cnt = recvfrom(my_sock, buf, sizeof(buf), 0, (struct sockaddr *) &addr, &len);
 	buf[cnt] = '\0';
 
 	if ((res = dns_msg_parse_answer(buf, cnt, 0, rrs, sizeof(rrs))) == -1) {
@@ -67,9 +71,11 @@ mdnssd_read_answer(int json)
 	}
 
 	UTIL_STRCPY(answer, "    {\n");
+	port = 0;
+	ipv4 = ipv6 = name = NULL;
+	txt = "";
 
-	for (num = 0, port = 0, ipv4 = ipv6 = name = txt = NULL; num < res; num++) {
-		rrp = rrs + num;
+	for (num = 0, rrp = rrs; num < res; num++, rrp++) {
 		if (rrp->rr_type == DNS_RR_TYPE_A) {
 			util_append(answer, sizeof(answer), "      \"a\": \"%s\",\n", rrp->rr.rr_a.a_addr_str);
 			if (ipv4 == NULL) {
@@ -92,11 +98,7 @@ mdnssd_read_answer(int json)
 			continue;
 		}
 		if (rrp->rr_type == DNS_RR_TYPE_TXT) {
-			txt = rrp->rr.rr_txt.txt_data;
-			util_append(answer, sizeof(answer), "      \"txt\": \"%s\",\n", txt);
-			if (strlen(txt) == 0) {
-				txt = NULL;
-			}
+			txt = rrp->rr.rr_txt.txt_data;		// just remember, will check for iTunes
 			continue;
 		}
 		if (rrp->rr_type == DNS_RR_TYPE_AAAA) {
@@ -120,6 +122,11 @@ mdnssd_read_answer(int json)
 		util_debug("incomplete answer (missing port or IPv4)");
 		return;
 	}
+
+	if (port == 3689) {
+		txt = "DAAP (iTunes) Server";
+	}
+	util_append(answer, sizeof(answer), "      \"txt\": \"%s\",\n", txt);
 
 	snprintf(url, sizeof(url), "http://%s:%d/", ipv4, port);
 	util_append(answer, sizeof(answer), "      \"url\": \"%s\"\n", url);
@@ -152,7 +159,7 @@ mdnssd_write_query(void)
 	addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
 	addrlen = sizeof(addr);
 
-	sendto(mdnssd_sock, data, len, 0, (struct sockaddr *) &addr, addrlen);
+	sendto(my_sock, data, len, 0, (struct sockaddr *) &addr, addrlen);
 
 	results = NULL;
 }
@@ -165,24 +172,24 @@ mdnssd_exception(void)
 }
 
 
-void
-mdnssd_select(int json, fd_set *rfds, fd_set *wfds, fd_set *xfds)
+static void
+mdnssd_select(fd_set *rfds, fd_set *wfds, fd_set *xfds)
 {
-	if (FD_ISSET(mdnssd_sock, rfds)) {
-		mdnssd_read_answer(json);
+	if (FD_ISSET(my_sock, rfds)) {
+		mdnssd_read_answer();
 	}
 
-	if (FD_ISSET(mdnssd_sock, wfds)) {
+	if (FD_ISSET(my_sock, wfds)) {
 		mdnssd_write_query();
 	}
 
-	if (FD_ISSET(mdnssd_sock, xfds)) {
+	if (FD_ISSET(my_sock, xfds)) {
 		mdnssd_exception();
 	}
 }
 
 
-void
+static void
 mdnssd_prepare(int query, int *hfd, fd_set *rfds, fd_set *wfds, fd_set *xfds)
 {
 	struct sockaddr_in addr;
@@ -190,13 +197,13 @@ mdnssd_prepare(int query, int *hfd, fd_set *rfds, fd_set *wfds, fd_set *xfds)
 	struct ip_mreq mreq;
 	int one = 1;
 
-	if (mdnssd_sock <= 0) {
-		mdnssd_sock = socket(AF_INET, SOCK_DGRAM, 0);
-		if (mdnssd_sock == -1) {
+	if (my_sock <= 0) {
+		my_sock = socket(AF_INET, SOCK_DGRAM, 0);
+		if (my_sock == -1) {
 			err(EXIT_FAILURE, "mdnssd:socket");
 		}
 
-		if (setsockopt(mdnssd_sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
+		if (setsockopt(my_sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
 			err(EXIT_FAILURE, "mdnssd:SO_REUSEADDR");
 		}
 
@@ -204,24 +211,60 @@ mdnssd_prepare(int query, int *hfd, fd_set *rfds, fd_set *wfds, fd_set *xfds)
 		addr.sin_port        = htons(MDNS_PORT);
 		addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
 		addrlen = sizeof(addr);
-		if (bind(mdnssd_sock, (struct sockaddr *) &addr, addrlen) < 0) {
+		if (bind(my_sock, (struct sockaddr *) &addr, addrlen) < 0) {
 			err(EXIT_FAILURE, "mdnssd:bind");
 		}
 
 		mreq.imr_multiaddr.s_addr = inet_addr(INADDR_MDNS);
 		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (setsockopt(mdnssd_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+		if (setsockopt(my_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
 			err(EXIT_FAILURE, "mdnssd:IP_ADD_MEMBERSHIP");
 		} 
 	}
 
-	FD_SET(mdnssd_sock, rfds);
+	FD_SET(my_sock, rfds);
 	if (query == 1) {
-		FD_SET(mdnssd_sock, wfds);
+		FD_SET(my_sock, wfds);
 	}
-	FD_SET(mdnssd_sock, xfds);
-	if (mdnssd_sock > *hfd) {
-		*hfd = mdnssd_sock;
+	FD_SET(my_sock, xfds);
+	if (my_sock > *hfd) {
+		*hfd = my_sock;
+	}
+}
+
+
+int
+mdnssd_browse(void)
+{
+	struct timeval timer;
+	fd_set rfds, wfds, xfds;
+	int query, hfd, res;
+	time_t time_up = time(NULL) + config_get_timeout();
+
+	for (query = 1; ; ) {
+		if (time(NULL) >= time_up) {
+			break;
+		}
+
+		timer.tv_sec  = 1;
+		timer.tv_usec = 0;
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		FD_ZERO(&xfds);
+
+		hfd = 0;
+		mdnssd_prepare(query, &hfd, &rfds, &wfds, &xfds);
+
+		if ((res = select(hfd + 1, &rfds, &wfds, &xfds, &timer)) == -1) {
+			util_fatal("can't select-mdnssd (%s)", strerror(errno));
+		}
+		if (res == 0) {
+			util_debug("tick-mdnssd...");
+			continue;
+		}
+		query = 0;
+
+		mdnssd_select(&rfds, &wfds, &xfds);
 	}
 }
 
@@ -237,22 +280,22 @@ static void
 mdnssd_cleanup(void)
 {
 	struct ip_mreq mreq;
-	result_t *result, *next;
+	result_t *result;
 
-	if (mdnssd_sock > 0) {
+	if (my_sock > 0) {
 		mreq.imr_multiaddr.s_addr = inet_addr(INADDR_MDNS);
 		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-		setsockopt(mdnssd_sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+		setsockopt(my_sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
 
-		close(mdnssd_sock);
-		mdnssd_sock = 0;
+		close(my_sock);
+		my_sock = 0;
 	}
 
 	while (results != NULL) {
-		next = results->next;
+		result = results->next;
 		util_free(results->text);
 		util_free(results);
-		results = next;
+		results = result;
 	}
 }
 
@@ -260,7 +303,8 @@ mdnssd_cleanup(void)
 void
 mdnssd_init(void)
 {
-	mdnssd_sock = 0;
+	my_sock = 0;
+	results = NULL;
 
 	atexit(mdnssd_cleanup);
 }
