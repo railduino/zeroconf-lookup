@@ -78,17 +78,19 @@ The first one found is used, so locations cannot be mixed.
 
 The three variables and their default value are:
 
-> **timeout=3**The timeout if the built-in mDNS-SD discovery is used,
-> i.e. Avahi is not found or not used. The number must be in the range
-> from 1 to 9.
+> **timeout=3\
+> **The timeout if the built-in mDNS-SD discovery is used, i.e. Avahi is
+> not found or not used. The number must be in the range from 1 to 9.
 
-> **avahi=1**Use Avahi if available and. Disable Avahi browsing by
-> setting to 0. A sub-process is forked and **avahi-browse** ist called
-> with the following command line:\
+> **avahi=1\
+> **Use Avahi if available and. Disable Avahi browsing by setting to 0.
+> A sub-process is forked and **avahi-browse** ist called with the
+> following command line:\
 > ***avahi-browse --resolve --parsable --no-db-lookup --terminate
 > \_http.\_tcp 2&gt;/dev/null***
 
-> **debug=0**Debugging is enabled setting this value to 1.
+> **debug=0\
+> **Debugging is enabled setting this value to 1.
 
 An example configuration file is included in the repository called
 ***zeroconf\_lookup.conf.example***. It enabled debugging. The following
