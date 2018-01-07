@@ -22,7 +22,7 @@
 # SOFTWARE.
 #
 
-CFLAGS = -g -O0
+CFLAGS = -g -Wall -Werror -Wextra
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -48,6 +48,9 @@ run: zeroconf_lookup
 debug: zeroconf_lookup
 	ZEROCONF_LOOKUP="debug=1" ./zeroconf_lookup -j
 
+mdnssd: zeroconf_lookup
+	ZEROCONF_LOOKUP="debug=1;avahi=0" ./zeroconf_lookup -j
+
 user: zeroconf_lookup
 	./install.sh user
 
@@ -64,4 +67,6 @@ uninstall:
 	sudo rm -f /etc/opt/chrome/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
 	sudo rm -f /etc/chromium/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
 	sudo rm -f /usr/bin/zeroconf_lookup
+	rm -f ~/bin/zeroconf_lookup.conf ~/zeroconf_lookup.conf
+	sudo rm -f /etc/zeroconf_lookup.conf
 

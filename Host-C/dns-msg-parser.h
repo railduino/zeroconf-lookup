@@ -162,9 +162,9 @@ typedef struct {
 
 char *dns_msg_get_error(void);
 
-size_t dns_msg_create_query(char *data, size_t len, uint16_t id, char *name, uint16_t qtype);
+size_t dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype);
 
-int dns_msg_parse_answer(char *data, size_t len, uint16_t id, DNS_RR *rr, int rr_size);
+int dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size);
 
 
 #endif /* !_DNS_MSG_PARSER_H */

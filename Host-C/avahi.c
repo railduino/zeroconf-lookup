@@ -27,7 +27,8 @@
 #include "common.h"
 
 
-#define AVAHI_BROWSE_CMD	"avahi-browse --resolve --parsable --no-db-lookup --terminate _http._tcp 2>/dev/null"
+#define AVAHI_BROWSE_CMD	"/usr/bin/avahi-browse"
+#define AVAHI_BROWSE_ARGS	" --resolve --parsable --no-db-lookup --terminate _http._tcp 2>/dev/null"
 
 
 static char answer[1024];
@@ -37,18 +38,26 @@ static result_t *results;
 int
 avahi_browse(void)
 {
+	struct stat sb;
 	FILE *fp;
-	char line[4096], *ptr[32], url[1024], *tmp;
+	char line[4096], *ptr[32], *tmp;
 	char *rr_name, *rr_target, *rr_a, *rr_port, *rr_txt;
 	int num;
 	result_t *result;
 
 	if (config_use_avahi() != 1) {
+		util_debug("Avahi disabled by configuration");
 		return -1;
 	}
-	if ((fp = popen(AVAHI_BROWSE_CMD, "r")) == NULL) {
+	if (stat(AVAHI_BROWSE_CMD, &sb) == -1) {
+		util_debug("Avahi not found where expected");
 		return -1;
 	}
+	if ((fp = popen(AVAHI_BROWSE_CMD AVAHI_BROWSE_ARGS, "r")) == NULL) {
+		util_error("Avahi found, but popen gave %s", strerror(errno));
+		return -1;
+	}
+	util_info("using avahi-browse for discovery");
 
 	while (fgets(line, sizeof(line), fp) != NULL) {
 		for (num = 0; num < 32; num++) {

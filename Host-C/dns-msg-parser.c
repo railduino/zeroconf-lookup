@@ -38,7 +38,9 @@
 static char err_buf[4096];
 
 static size_t label_ofs[256];
-static int label_cnt;
+static size_t label_cnt;
+
+static uint16_t query_id = 0;
 
 
 static void
@@ -64,11 +66,11 @@ dns_msg_get_error(void)
 
 
 size_t
-dns_msg_create_query(char *data, size_t len, uint16_t id, char *name, uint16_t qtype)
+dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype)
 {
 	DNS_HEADER *hdr;
 	DNS_QUESTION que;
-	char buf[DNS_NAME_SIZE], *src, *dst;
+	char buf[DNS_NAME_SIZE], *src;
 	size_t ofs, siz;
 
 	memset(err_buf, '\0', sizeof(err_buf));
@@ -86,9 +88,10 @@ dns_msg_create_query(char *data, size_t len, uint16_t id, char *name, uint16_t q
 		return 0;
 	}
 	memset(data, '\0', len);
+	query_id++;
 
 	hdr = (DNS_HEADER *) data;
-	hdr->msg_id      = htons(id);
+	hdr->msg_id      = htons(query_id);
 	hdr->msg_flags   = 0;
 	hdr->msg_qdcount = htons(1);
 	hdr->msg_ancount = htons(0);
@@ -121,7 +124,6 @@ static size_t
 dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
 {
 	uint16_t jmp;
-	unsigned char chr;
 	char *ptr;
 	size_t ofs, siz, final, num;
 
@@ -154,6 +156,11 @@ dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
 			return 0;
 		}
 		label_ofs[label_cnt++] = ofs;
+
+		if ((ofs + siz + 1) > len) {
+			dns_msg_set_error(__func__, "name is too long");
+			return 0;
+		}
 
 		if (ptr != dst) {
 			*ptr++ = '.';
@@ -208,10 +215,13 @@ dns_msg_parse_rr_ptr(char *data, size_t len, size_t start, DNS_RR *rr)
 static size_t
 dns_msg_parse_rr_txt(char *data, size_t len, size_t start, DNS_RR *rr)
 {
-	size_t siz;
+	size_t siz = (size_t) data[start];
 
-	siz = (size_t) data[start];
-	// TODO check size
+	if ((start + siz) > len) {
+		dns_msg_set_error(__func__, "name is too long");
+		return 0;
+	}
+
 	memcpy(rr->rr.rr_txt.txt_data, data + start + 1, siz);
 
 	return start + siz + 1;
@@ -268,12 +278,11 @@ dns_msg_parse_rr_srv(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 int
-dns_msg_parse_answer(char *data, size_t len, uint16_t id, DNS_RR *rr, int rr_size)
+dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 {
 	DNS_HEADER hdr;
 	int num, cnt;
 	size_t start;
-	char *dst;
 
 	memset(err_buf, '\0', sizeof(err_buf));
 	label_cnt = 0;
@@ -300,6 +309,10 @@ dns_msg_parse_answer(char *data, size_t len, uint16_t id, DNS_RR *rr, int rr_siz
 	if (hdr.msg_nscount > 0) {
 		dns_msg_set_error(__func__, "answer contains %u NS records", hdr.msg_nscount);
 		return -1;
+	}
+	if (hdr.msg_id != query_id) {
+		dns_msg_set_error(__func__, "answer-ID %u does not match query-ID %u", hdr.msg_id, query_id);
+		// ignore this mismatch, since it seems not to be critical
 	}
 	cnt = hdr.msg_ancount + hdr.msg_arcount;
 	if (rr_size < cnt) {

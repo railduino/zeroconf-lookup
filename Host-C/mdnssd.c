@@ -53,7 +53,6 @@ mdnssd_read_answer(void)
 	socklen_t len;
 	int cnt, res, num, port;
 	DNS_RR rrs[10], *rrp;
-	unsigned int length;
 	char *ipv4, *ipv6, *name, *txt, *ptr;
 	result_t *result;
 
@@ -61,7 +60,7 @@ mdnssd_read_answer(void)
 	cnt = recvfrom(my_sock, buf, sizeof(buf), 0, (struct sockaddr *) &addr, &len);
 	buf[cnt] = '\0';
 
-	if ((res = dns_msg_parse_answer(buf, cnt, 0, rrs, sizeof(rrs))) == -1) {
+	if ((res = dns_msg_parse_answer(buf, cnt, rrs, sizeof(rrs))) == -1) {
 		util_error("%s", dns_msg_get_error());
 		return;
 	}
@@ -118,8 +117,16 @@ mdnssd_read_answer(void)
 		}
 	}
 
-	if (port == 0 || ipv4 == NULL) {
-		util_debug("incomplete answer (missing port or IPv4)");
+	if (name == NULL) {
+		util_debug("incomplete answer (missing name)");
+		return;
+	}
+	if (ipv4 == NULL) {
+		util_debug("incomplete answer (missing IPv4)");
+		return;
+	}
+	if (port == 0) {
+		util_debug("incomplete answer (missing port)");
 		return;
 	}
 
@@ -147,7 +154,7 @@ mdnssd_write_query(void)
 	struct sockaddr_in addr;
 	socklen_t addrlen;
 
-	len = dns_msg_create_query(data, sizeof(data), 0, QUERY_NAME, DNS_RR_TYPE_PTR);
+	len = dns_msg_create_query(data, sizeof(data), QUERY_NAME, DNS_RR_TYPE_PTR);
 	if (len == 0) {
 		util_error("%s", dns_msg_get_error());
 		return;
@@ -241,6 +248,8 @@ mdnssd_browse(void)
 	int query, hfd, res;
 	time_t time_up = time(NULL) + config_get_timeout();
 
+	util_info("using my own mDNS-SD for discovery");
+
 	for (query = 1; ; ) {
 		if (time(NULL) >= time_up) {
 			break;
@@ -266,6 +275,8 @@ mdnssd_browse(void)
 
 		mdnssd_select(&rfds, &wfds, &xfds);
 	}
+
+	return 0;
 }
 
 

@@ -153,10 +153,8 @@ send_result(char *source, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, ofs, query;
+	int c, ofs;
 	length_t length;
-	time_t time_up;
-	result_t *result;
 
 	if (sizeof(length.as_uint) != 4) {
 		errx(EXIT_FAILURE, "sizeof(length) is %lu, not 4", sizeof(length.as_uint));
@@ -194,7 +192,7 @@ main(int argc, char *argv[])
 	}
 
 	if (avahi_browse() == 0) {
-		send_result("avahi", avahi_get_result());
+		send_result("Avahi", avahi_get_result());
 		exit(EXIT_SUCCESS);
 	}
 
