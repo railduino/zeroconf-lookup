@@ -52,10 +52,10 @@ mdnssd: zeroconf_lookup
 	ZEROCONF_LOOKUP="debug=1;avahi=0" ./zeroconf_lookup -j
 
 user: zeroconf_lookup
-	./install.sh user
+	./install-manifest.sh user
 
 root: zeroconf_lookup
-	sudo ./install.sh root
+	sudo ./install-manifest.sh root
 
 log: zeroconf_lookup
 	tail -f /var/log/syslog
