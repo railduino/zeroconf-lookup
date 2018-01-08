@@ -45,7 +45,7 @@ avahi_browse(void)
 	int num;
 	result_t *result;
 
-	if (config_use_avahi() != 1) {
+	if (options_use_avahi() != 1) {
 		util_debug("Avahi disabled by configuration");
 		return -1;
 	}

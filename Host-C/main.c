@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	config_init(argv[0]);
+	options_init(argv[0]);
 	util_set_log("zeroconf_lookup");
 	avahi_init();
 	mdnssd_init();

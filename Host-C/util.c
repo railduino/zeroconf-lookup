@@ -150,7 +150,7 @@ util_set_log(char *ident)
 	openlog(ident, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_USER);
 	atexit(util_close_log);
 
-	if (config_use_debug() == 0) {
+	if (options_use_debug() == 0) {
 		setlogmask(LOG_UPTO(LOG_INFO));
 	}
 

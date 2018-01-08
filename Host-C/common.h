@@ -54,14 +54,6 @@ typedef union {
 } length_t;
 
 
-// Prototypes for config.c
-
-int config_get_timeout(void);
-int config_use_avahi(void);
-int config_use_debug(void);
-void config_init(char *argv0);
-
-
 // Prototypes for avahi.c
 
 int avahi_browse(void);
@@ -74,6 +66,14 @@ void avahi_init(void);
 int mdnssd_browse(void);
 result_t *mdnssd_get_result(void);
 void mdnssd_init(void);
+
+
+// Prototypes for options.c
+
+int options_get_timeout(void);
+int options_use_avahi(void);
+int options_use_debug(void);
+void options_init(char *argv0);
 
 
 // Prototypes for util.c

@@ -37,28 +37,28 @@ static int avahi   = DEFAULT_AVAHI;
 static int debug   = DEFAULT_DEBUG;
 
 int
-config_get_timeout(void)
+options_get_timeout(void)
 {
 	return timeout;
 }
 
 
 int
-config_use_avahi(void)
+options_use_avahi(void)
 {
 	return avahi;
 }
 
 
 int
-config_use_debug(void)
+options_use_debug(void)
 {
 	return debug;
 }
 
 
 static void
-config_read_value(char *line)
+options_read_value(char *line)
 {
 	int result;
 
@@ -92,7 +92,7 @@ config_read_value(char *line)
 
 
 void
-config_init(char *argv0)
+options_init(char *argv0)
 {
 	char config[FILENAME_MAX], line[1024], *ptr;
 	FILE *fp = NULL;
@@ -100,7 +100,7 @@ config_init(char *argv0)
 	if ((ptr = getenv("ZEROCONF_LOOKUP")) != NULL) {
 		UTIL_STRCPY(config, ptr);
 		for (ptr = strtok(config, ",:;"); ptr != NULL; ptr = strtok(NULL, ",:;")) {
-			config_read_value(ptr);
+			options_read_value(ptr);
 		}
 	}
 
@@ -127,7 +127,7 @@ config_init(char *argv0)
 	util_info("read config from %s", ptr);
 
 	while (fgets(line, sizeof(line), fp) != NULL) {
-		config_read_value(line);
+		options_read_value(line);
 	}
 
 	fclose(fp);

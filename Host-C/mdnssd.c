@@ -246,7 +246,7 @@ mdnssd_browse(void)
 	struct timeval timer;
 	fd_set rfds, wfds, xfds;
 	int query, hfd, res;
-	time_t time_up = time(NULL) + config_get_timeout();
+	time_t time_up = time(NULL) + options_get_timeout();
 
 	util_info("using my own mDNS-SD for discovery");
 
