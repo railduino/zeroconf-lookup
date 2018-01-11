@@ -74,7 +74,7 @@ fi
 
 if [[ $1 == "root" ]] ; then
 	rm -f /usr/bin/$_binary
-	install -o root -g root -m 0755 $_binary /usr/bin
+	install -v -o root -g root -m 0755 $_binary /usr/bin
 
 	for _dest in	/etc/opt/chrome/native-messaging-hosts \
 			/etc/chromium/native-messaging-hosts ; do
@@ -102,7 +102,7 @@ if [[ $1 == "root" ]] ; then
 		{
 		  "name": "$_jsonid",
 		  "description": "$_inform",
-		  "path": "$HOME/bin/$_binary",
+		  "path": "/usr/bin/$_binary",
 		  "type": "stdio",
 		  "allowed_extensions": [ "zeroconf_lookup@railduino.com" ]
 		}
