@@ -24,11 +24,9 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
+#include "common.h"
 
-#include "dns-msg-parser.h"
+#include "parser.h"
 
 
 /**
@@ -44,7 +42,7 @@ static uint16_t query_id = 0;
 
 
 static void
-dns_msg_set_error(const char *func, char *fmt, ...)
+parser_set_error(const char *func, char *fmt, ...)
 {
 	size_t ofs;
 	va_list ap;
@@ -59,14 +57,14 @@ dns_msg_set_error(const char *func, char *fmt, ...)
 
 
 char *
-dns_msg_get_error(void)
+parser_get_error(void)
 {
 	return err_buf;
 }
 
 
 size_t
-dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype)
+parser_create_query(char *data, size_t len, char *name, uint16_t qtype)
 {
 	DNS_HEADER *hdr;
 	DNS_QUESTION que;
@@ -76,15 +74,15 @@ dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype)
 	memset(err_buf, '\0', sizeof(err_buf));
 
 	if (name == NULL || strlen(name) == 0) {
-		dns_msg_set_error(__func__, "missing name");
+		parser_set_error(__func__, "missing name");
 		return 0;
 	}
 	if (strlen(name) > (DNS_NAME_SIZE) - 2) {
-		dns_msg_set_error(__func__, "name too long");
+		parser_set_error(__func__, "name too long");
 		return 0;
 	}
 	if (len < (sizeof(DNS_HEADER) + strlen(name) + 6)) {
-		dns_msg_set_error(__func__, "buffer too small");
+		parser_set_error(__func__, "buffer too small");
 		return 0;
 	}
 	memset(data, '\0', len);
@@ -121,7 +119,7 @@ dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype)
  */
 
 static size_t
-dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
+parser_parse_name(char *data, size_t len, size_t start, char *dst)
 {
 	uint16_t jmp;
 	char *ptr;
@@ -141,7 +139,7 @@ dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
 				}
 			}
 			if (num >= label_cnt) {
-				dns_msg_set_error(__func__, "invalid jump target");
+				parser_set_error(__func__, "invalid jump target");
 				return 0;
 			}
 			continue;
@@ -152,13 +150,13 @@ dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
 		}
 
 		if (siz > 63) {
-			dns_msg_set_error(__func__, "label is too long");
+			parser_set_error(__func__, "label is too long");
 			return 0;
 		}
 		label_ofs[label_cnt++] = ofs;
 
 		if ((ofs + siz + 1) > len) {
-			dns_msg_set_error(__func__, "name is too long");
+			parser_set_error(__func__, "name is too long");
 			return 0;
 		}
 
@@ -170,7 +168,7 @@ dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
 		ofs += (siz + 1);
 	}
 
-	dns_msg_set_error(__func__, "unfinished name");
+	parser_set_error(__func__, "unfinished name");
 	return 0;
 }
 
@@ -180,13 +178,13 @@ dns_msg_parse_name(char *data, size_t len, size_t start, char *dst)
  */
 
 static size_t
-dns_msg_parse_rr_a(char *data, size_t len, size_t start, DNS_RR *rr)
+parser_parse_rr_a(char *data, size_t len, size_t start, DNS_RR *rr)
 {
 	size_t adr_len = sizeof(rr->rr.rr_a.a_addr);
 	size_t str_len = sizeof(rr->rr.rr_a.a_addr_str);
 
 	if ((start + adr_len) > len) {
-		dns_msg_set_error(__func__, "buffer len too small for A record");
+		parser_set_error(__func__, "buffer len too small for A record");
 		return 0;
 	}
 
@@ -202,9 +200,9 @@ dns_msg_parse_rr_a(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 static size_t
-dns_msg_parse_rr_ptr(char *data, size_t len, size_t start, DNS_RR *rr)
+parser_parse_rr_ptr(char *data, size_t len, size_t start, DNS_RR *rr)
 {
-	return dns_msg_parse_name(data, len, start, rr->rr.rr_ptr.ptr_dname);
+	return parser_parse_name(data, len, start, rr->rr.rr_ptr.ptr_dname);
 }
 
 
@@ -213,12 +211,12 @@ dns_msg_parse_rr_ptr(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 static size_t
-dns_msg_parse_rr_txt(char *data, size_t len, size_t start, DNS_RR *rr)
+parser_parse_rr_txt(char *data, size_t len, size_t start, DNS_RR *rr)
 {
 	size_t siz = (size_t) data[start];
 
 	if ((start + siz) > len) {
-		dns_msg_set_error(__func__, "name is too long");
+		parser_set_error(__func__, "name is too long");
 		return 0;
 	}
 
@@ -233,13 +231,13 @@ dns_msg_parse_rr_txt(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 static size_t
-dns_msg_parse_rr_aaaa(char *data, size_t len, size_t start, DNS_RR *rr)
+parser_parse_rr_aaaa(char *data, size_t len, size_t start, DNS_RR *rr)
 {
 	size_t adr_len = sizeof(rr->rr.rr_aaaa.aaaa_addr);
 	size_t str_len = sizeof(rr->rr.rr_aaaa.aaaa_addr_str);
 
 	if ((start + adr_len) > len) {
-		dns_msg_set_error(__func__, "buffer len too small for AAAA record");
+		parser_set_error(__func__, "buffer len too small for AAAA record");
 		return 0;
 	}
 
@@ -255,7 +253,7 @@ dns_msg_parse_rr_aaaa(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 static size_t
-dns_msg_parse_rr_srv(char *data, size_t len, size_t start, DNS_RR *rr)
+parser_parse_rr_srv(char *data, size_t len, size_t start, DNS_RR *rr)
 {
 	memcpy(&(rr->rr.rr_srv.srv_prio), data + start, sizeof(rr->rr.rr_srv.srv_prio));
 	rr->rr.rr_srv.srv_prio = ntohs(rr->rr.rr_srv.srv_prio);
@@ -269,7 +267,7 @@ dns_msg_parse_rr_srv(char *data, size_t len, size_t start, DNS_RR *rr)
 	rr->rr.rr_srv.srv_port = ntohs(rr->rr.rr_srv.srv_port);
 	start += sizeof(rr->rr.rr_srv.srv_port);
 
-	return dns_msg_parse_name(data, len, start, rr->rr.rr_srv.srv_target);
+	return parser_parse_name(data, len, start, rr->rr.rr_srv.srv_target);
 }
 
 
@@ -278,7 +276,7 @@ dns_msg_parse_rr_srv(char *data, size_t len, size_t start, DNS_RR *rr)
  */
 
 int
-dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
+parser_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 {
 	DNS_HEADER hdr;
 	int num, cnt;
@@ -288,7 +286,7 @@ dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 	label_cnt = 0;
 
 	if (len < sizeof(DNS_HEADER)) {
-		dns_msg_set_error(__func__, "buffer len too small for header");
+		parser_set_error(__func__, "buffer len too small for header");
 		return -1;
 	}
 	memcpy(&hdr, data, sizeof(DNS_HEADER));
@@ -303,20 +301,20 @@ dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 		return 0;
 	}
 	if ((hdr.msg_flags & 0x000f) != 0x0000) {
-		dns_msg_set_error(__func__, "error code: %d", (hdr.msg_flags & 0x000f));
+		parser_set_error(__func__, "error code: %d", (hdr.msg_flags & 0x000f));
 		return -1;
 	}
 	if (hdr.msg_nscount > 0) {
-		dns_msg_set_error(__func__, "answer contains %u NS records", hdr.msg_nscount);
+		parser_set_error(__func__, "answer contains %u NS records", hdr.msg_nscount);
 		return -1;
 	}
 	if (hdr.msg_id != query_id) {
-		dns_msg_set_error(__func__, "answer-ID %u does not match query-ID %u", hdr.msg_id, query_id);
+		parser_set_error(__func__, "answer-ID %u does not match query-ID %u", hdr.msg_id, query_id);
 		// ignore this mismatch, since it seems not to be critical
 	}
 	cnt = hdr.msg_ancount + hdr.msg_arcount;
 	if (rr_size < cnt) {
-		dns_msg_set_error(__func__, "rr_size too small (need %d)", cnt);
+		parser_set_error(__func__, "rr_size too small (need %d)", cnt);
 		return -1;
 	}
 	start = sizeof(DNS_HEADER);
@@ -324,7 +322,7 @@ dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 	for (num = 0; num < cnt; num++, rr++) {
 		memset(rr, '\0', sizeof(DNS_RR));
 
-		if ((start = dns_msg_parse_name(data, len, start, rr->rr_name)) == 0) {
+		if ((start = parser_parse_name(data, len, start, rr->rr_name)) == 0) {
 			return -1;
 		}
 
@@ -346,32 +344,32 @@ dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 
 		switch (rr->rr_type) {
 			case DNS_RR_TYPE_A:
-				if (dns_msg_parse_rr_a(data, len, start, rr) == 0) {
+				if (parser_parse_rr_a(data, len, start, rr) == 0) {
 					return -1;
 				}
 				break;
 			case DNS_RR_TYPE_PTR:
-				if (dns_msg_parse_rr_ptr(data, len, start, rr) == 0) {
+				if (parser_parse_rr_ptr(data, len, start, rr) == 0) {
 					return -1;
 				}
 				break;
 			case DNS_RR_TYPE_TXT:
-				if (dns_msg_parse_rr_txt(data, len, start, rr) == 0) {
+				if (parser_parse_rr_txt(data, len, start, rr) == 0) {
 					return -1;
 				}
 				break;
 			case DNS_RR_TYPE_AAAA:
-				if (dns_msg_parse_rr_aaaa(data, len, start, rr) == 0) {
+				if (parser_parse_rr_aaaa(data, len, start, rr) == 0) {
 					return -1;
 				}
 				break;
 			case DNS_RR_TYPE_SRV:
-				if (dns_msg_parse_rr_srv(data, len, start, rr) == 0) {
+				if (parser_parse_rr_srv(data, len, start, rr) == 0) {
 					return -1;
 				}
 				break;
 			default:
-				dns_msg_set_error(__func__, "invalid RR-Type 0x%02x", rr->rr_type);
+				parser_set_error(__func__, "invalid RR-Type 0x%02x", rr->rr_type);
 				return -1;
 		}
 

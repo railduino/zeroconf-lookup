@@ -25,7 +25,7 @@
  ****************************************************************************/
 
 /**
- * @file dns-msg-parser.h
+ * @file parser.h
  * @author Volker Wiegand
  * @date 17-DEC-2017
  * @brief DNS Format Structures and Prototypes for mDNS-SD
@@ -36,9 +36,8 @@
  * @see https://en.wikipedia.org/wiki/List_of_DNS_record_types
  */
 
-
-#ifndef _DNS_MSG_PARSER_H
-#define _DNS_MSG_PARSER_H 1
+#ifndef _PARSER_H
+#define _PARSER_H 1
 
 
 #include <netdb.h>		// for uint16_t and uint32_t
@@ -160,12 +159,13 @@ typedef struct {
 } DNS_RR;
 
 
-char *dns_msg_get_error(void);
+/**
+ * Function prototypes
+ */
 
-size_t dns_msg_create_query(char *data, size_t len, char *name, uint16_t qtype);
+char *parser_get_error(void);
+size_t parser_create_query(char *data, size_t len, char *name, uint16_t qtype);
+int parser_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size);
 
-int dns_msg_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size);
-
-
-#endif /* !_DNS_MSG_PARSER_H */
+#endif /* !_PARSER_H */
 

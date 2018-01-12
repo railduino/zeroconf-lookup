@@ -26,18 +26,38 @@
 
 #include "common.h"
 
-#include <getopt.h>
+#define VERSION		"1.0.0"
+
+#if defined(__unix__)
+#  include <getopt.h>
+#  include <poll.h>
+#  if defined(__APPLE__)
+#    define DEFAULT_LOGFILE	"/tmp/zeroconf_lookup.log"
+#  else
+#    define DEFAULT_LOGFILE	"/tmp/zeroconf_lookup.log"
+#  endif
+#elif defined(_WIN32)
+#  include <Windows.h>
+#    define DEFAULT_LOGFILE	"use mktemp()"
+#endif
 
 
 static struct option long_options[] = {
-	{ "help",    no_argument, NULL, 'h' },
-	{ "json",    no_argument, NULL, 'j' },
-	{ "verbose", no_argument, NULL, 'v' },
+	{ "avahi",   no_argument,       NULL, 'a' },
+	{ "dnssd",   no_argument,       NULL, 'd' },
+	{ "empty",   no_argument,       NULL, 'e' },
+	{ "help",    no_argument,       NULL, 'h' },
+	{ "json",    no_argument,       NULL, 'j' },
+	{ "log",     required_argument, NULL, 'l' },
+	{ "query",   no_argument,       NULL, 'q' },
+	{ "verbose", no_argument,       NULL, 'v' },
 	{ NULL, 0, NULL, 0 }
 };
 
-
-static int json = 0;
+static char     my_input[64];
+static length_t my_length;
+static size_t   my_length_offset = 0;
+static size_t   my_input_offset;
 
 
 static void
@@ -45,76 +65,122 @@ usage(char *name, int retval)
 {
 	FILE *fp = (retval == EXIT_SUCCESS ? stdout : stderr);
 
-	fprintf(fp, "Syntax: %s [options ...]\n", name);
-	fprintf(fp, "   -h|--help      Help (show this text) and exit\n");
-	fprintf(fp, "   -j|--json      Print human readable length prolog\n");
-	fprintf(fp, "   -v|--verbose   Send logs to stderr besides syslog\n");
+	fprintf(fp, "Railduino zeroconf_lookup Version %s\n", VERSION);
+	fprintf(fp, "Usage: %s [options ...]\n", name);
+	fprintf(fp, "      -a|--avahi        Ignore Avahi interface altogether\n");
+	fprintf(fp, "      -d|--dnssd        Ignore DNS-SD interface altogether\n");
+	fprintf(fp, "      -e|--empty        Ignore Empty interface altogether\n");
+	fprintf(fp, "      -h|--help         Display usage and exit\n");
+	fprintf(fp, "      -j|--json         Use human readable length\n");
+	fprintf(fp, "      -l|--log=<file>   Change logfile [default %s]\n", DEFAULT_LOGFILE);
+	fprintf(fp, "                        Recognizes 'none' or 'stderr'\n");
+	fprintf(fp, "      -q|--query        Ignore Query interface altogether\n");
+	fprintf(fp, "      -v|--verbose      Increase verbosity level\n");
 
 	exit(retval);
 }
 
 
-static void
-await_command(void)
+static int
+handle_input_byte(char chr)
 {
-	char buffer[1024], temp;
-	size_t ofs_l, ofs_m;
-	struct timeval timer;
-	fd_set rfds, wfds, xfds;
-	int hfd, res;
-	length_t length;
-
-	for (ofs_l = 0; ; ) {
-		timer.tv_sec  = 1;
-		timer.tv_usec = 0;
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		FD_ZERO(&xfds);
-
-		FD_SET(fileno(stdin), &rfds);
-		hfd = fileno(stdin);
-
-		if ((res = select(hfd + 1, &rfds, &wfds, &xfds, &timer)) == -1) {
-			util_fatal("can't select-await (%s)", strerror(errno));
-		}
-		if (res == 0) {
-			util_debug("tick-await...");
-			continue;
-		}
-
-		if (FD_ISSET(fileno(stdin), &rfds)) {
-			read(fileno(stdin), &temp, 1);
-			if (ofs_l < sizeof(length.as_uint)) {
-				memset(buffer, '\0', sizeof(buffer));
-				ofs_m = 0;
-				length.as_char[ofs_l++] = temp;
-				continue;
-			}
-			if (length.as_uint >= sizeof(buffer)) {
-				util_error("length %u bigger than buffer size %u",
-						length.as_uint, sizeof(buffer));
-				ofs_l = 0;
-			}
-
-			if (ofs_m < length.as_uint) {
-				if (temp > 0x20 && temp < 0x7f) {
-					util_debug("Got stdin (%2u): %c",   ofs_m, temp);
-				} else {
-					util_debug("Got stdin (%2u): %02x", ofs_m, temp);
-				}
-				buffer[ofs_m] = temp;
-			}
-			if (++ofs_m == length.as_uint) {
-				util_info("message: '%s'", buffer);
-				return;
-			}
-		}
+	if (my_length_offset < sizeof(my_length.as_uint)) {
+		util_debug(1, "got length byte %d = %02x", my_length_offset, (int) chr & 0xff);
+		memset(my_input, '\0', sizeof(my_input));
+		my_input_offset = 0;
+		my_length.as_char[my_length_offset++] = chr;
+		return 0;
 	}
+
+	if (my_length.as_uint >= sizeof(my_input)) {
+		util_error("length %u bigger than buffer size %u",
+				my_length.as_uint, sizeof(my_input));
+		my_length_offset = 0;
+		return 0;
+	}
+	util_debug(1, "length is complete: %u", my_length.as_uint);
+
+	if (my_input_offset < my_length.as_uint) {
+		if (chr > 0x20 && chr < 0x7f) {
+			util_debug(1, "got message byte %2u = %c",   my_input_offset, chr);
+		} else {
+			util_debug(1, "got message byte %2u = %02x", my_input_offset, (int) chr & 0xff);
+		}
+		my_input[my_input_offset] = chr;
+	}
+
+	if (++my_input_offset == my_length.as_uint) {
+		util_info("input complete: '%s'", util_strtrim(my_input, '"'));
+		return 1;
+	}
+
+	return 0;
 }
 
 
 static void
-send_result(char *source, result_t *result)
+receive_input(void)
+{
+#if defined(__unix__)
+	util_debug(1, "awaiting input (poll)");
+	for (;;) {
+		struct pollfd fds[1];
+		int ret;
+		char temp;
+
+		fds[0].fd = STDIN_FILENO;
+		fds[0].events = POLLIN;
+		if ((ret = poll(fds, 1, 5000)) == -1) {
+			util_fatal("can't poll stdin (%s)", strerror(errno));
+		}
+		if (ret == 0) {
+			util_fatal("timeout on stdin");
+		}
+
+		if (fds[0].revents & POLLIN) {
+			read(fileno(stdin), &temp, 1);
+			if (handle_input_byte(temp) == 1) {
+				return;
+			}
+		}
+	}
+#elif defined(_WIN32)
+	/**
+	 * See: https://stackoverflow.com/a/35060700
+	 */
+	HANDLE hStdin;
+	int nTimeout, nRun;
+	DWORD dwAvailable;
+	unsigned int temp;
+
+	util_debug(1, "awaiting input (PeekNamedPipe)");
+	nTimeout = GetTickCount() + 5000;
+	hStdin   = GetStdHandle(STD_INPUT_HANDLE);
+
+	while (GetTickCount() < nTimeout) {
+		dwAvailable = 0; 
+		PeekNamedPipe(hStdin, NULL, 0, NULL, &dwAvailable, NULL);
+		if (dwAvailable > 0) {
+			while (dwAvailable > 0) {
+				temp = getchar();
+				if (handle_input_byte((char) temp) == 1) {
+					return;
+				}
+			}
+		} else {
+			Sleep(10);
+		}
+	}
+
+	util_fatal("timeout on stdin");
+#else
+	util_fatal("no method for stdin");
+#endif
+}
+
+
+static void
+send_result(char *source, int json, result_t *result)
 {
 	char prolog[1024], *epilog;
 	length_t length;
@@ -123,8 +189,7 @@ send_result(char *source, result_t *result)
 	UTIL_STRCPY(prolog, "{\n  \"version\": 2,\n");
 	util_append(prolog, sizeof(prolog), "  \"source\": \"%s\",\n", source);
 	UTIL_STRCAT(prolog, "  \"result\": [\n");
-	epilog = "  ]\n}\n";
-	length.as_uint = strlen(prolog) + strlen(epilog);
+	length.as_uint = strlen(prolog);
 
 	for (runner = result; runner != NULL; runner = runner->next) {
 		length.as_uint += strlen(runner->text) + 1;
@@ -133,10 +198,13 @@ send_result(char *source, result_t *result)
 		}
 	}
 
+	epilog = "  ]\n}\n";
+	length.as_uint += strlen(epilog);
+
 	if (json == 0) {
 		write(fileno(stdout), length.as_char, 4);
 	} else {
-		printf("%u bytes ==>\n", length.as_uint);
+		printf("==> %u bytes <==\n", length.as_uint);
 	}
 
 	printf("%s", prolog);
@@ -153,19 +221,24 @@ send_result(char *source, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, ofs;
-	length_t length;
+	int c, ofs, json, avahi, dnssd, empty, query;
+	char *logfile = DEFAULT_LOGFILE;
 
-	if (sizeof(length.as_uint) != 4) {
-		errx(EXIT_FAILURE, "sizeof(length) is %lu, not 4", sizeof(length.as_uint));
-	}
-
-	for (ofs = 0; ; ) {
-		c = getopt_long(argc, argv, "h?jv", long_options, &ofs);
+	for (ofs = json = 0, avahi = dnssd = empty = query = 1; ; ) {
+		c = getopt_long(argc, argv, "adeh?jl:qv", long_options, &ofs);
 		if (c < 0) {
 			break;
 		}
 		switch (c) {
+			case 'a':
+				avahi = 0;
+				break;
+			case 'd':
+				dnssd = 0;
+				break;
+			case 'e':
+				empty = 0;
+				break;
 			case 'h':
 			case '?':
 				usage(argv[0], EXIT_SUCCESS);
@@ -173,8 +246,14 @@ main(int argc, char *argv[])
 			case 'j':
 				json = 1;
 				break;
+			case 'l':
+				logfile = optarg;
+				break;
+			case 'q':
+				query = 0;
+				break;
 			case 'v':
-				util_verbose();
+				util_inc_verbose();
 				break;
 			default:
 				usage(argv[0], EXIT_FAILURE);
@@ -183,21 +262,32 @@ main(int argc, char *argv[])
 	}
 
 	options_init(argv[0]);
-	util_set_log("zeroconf_lookup");
-	avahi_init();
-	mdnssd_init();
+	util_open_logfile(logfile);
 
 	if (json == 0) {
-		await_command();
+		receive_input();
 	}
 
-	if (avahi_browse() == 0) {
-		send_result("Avahi", avahi_get_result());
+	if (avahi && avahi_found()) {
+		send_result("Avahi", json, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
 
-	mdnssd_browse();
-	send_result("mDNS-SD", mdnssd_get_result());
-	exit(EXIT_SUCCESS);
+	if (dnssd && dnssd_found()) {
+		send_result("DNS-SD", json, dnssd_browse());
+		exit(EXIT_SUCCESS);
+	}
+
+	if (query && query_found()) {
+		send_result("Query", json, query_browse());
+		exit(EXIT_SUCCESS);
+	}
+
+	if (empty && empty_found()) {
+		send_result("Empty", json, empty_browse());
+		exit(EXIT_SUCCESS);
+	}
+
+	util_fatal("no discovery method");
 }
 

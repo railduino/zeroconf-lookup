@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-
 #define DEFAULT_TIMEOUT		3
 #define DEFAULT_AVAHI		1
 #define DEFAULT_DEBUG		0
@@ -35,6 +34,7 @@
 static int timeout = DEFAULT_TIMEOUT;
 static int avahi   = DEFAULT_AVAHI;
 static int debug   = DEFAULT_DEBUG;
+
 
 int
 options_get_timeout(void)

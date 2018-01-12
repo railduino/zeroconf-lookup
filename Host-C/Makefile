@@ -22,14 +22,22 @@
 # SOFTWARE.
 #
 
-CFLAGS = -g -Wall -Werror -Wextra
+ifeq ($(OS),Windows_NT)
+  CCFLAGS += -D WIN32
+else
+  CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+  UNAME_S := $(shell uname -s)
+  ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -L/usr/lib/x86_64-linux-gnu -lavahi-client -lavahi-common
+  endif
+endif
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
 
 zeroconf_lookup: $(OBJS)
 	ctags *.[ch]
-	gcc $(CFLAGS) -o $@ $^
+	gcc -o $@ $^ $(LDFLAGS)
 
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -46,19 +54,19 @@ run: zeroconf_lookup
 	@./zeroconf_lookup -j
 
 debug: zeroconf_lookup
-	ZEROCONF_LOOKUP="debug=1" ./zeroconf_lookup -j
+	ZEROCONF_LOOKUP="verbose=1" ./zeroconf_lookup -j
 
-mdnssd: zeroconf_lookup
-	ZEROCONF_LOOKUP="debug=1;avahi=0" ./zeroconf_lookup -j
+deep: zeroconf_lookup
+	ZEROCONF_LOOKUP="verbose=9" ./zeroconf_lookup -j
 
 user: zeroconf_lookup
 	./install-manifest.sh user
 
-root: zeroconf_lookup
-	sudo ./install-manifest.sh root
+system: zeroconf_lookup
+	sudo ./install-manifest.sh system
 
 log: zeroconf_lookup
-	tail -f /var/log/syslog
+	tail -f /tmp/zeroconf_lookup.log
 
 uninstall:
 	rm -f ~/.config/google-chrome/NativeMessagingHosts/com.railduino.chrome.zeroconf_lookup.json
