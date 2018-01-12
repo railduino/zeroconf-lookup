@@ -25,20 +25,53 @@
 
 set -e
 
-_extens="knldjmfmopnpolahpmmgbagdohdnhkik"
-_jsonid="com.railduino.zeroconf_lookup"
 _inform="Find HTTP Servers in the .local domain using Zeroconf"
 _binary="zeroconf_lookup"
+_extens="__WAITING_FOR_GOOGLE_APPROVAL___"
+_jsonid="com.railduino.zeroconf_lookup"
 
+_camel="NativeMessagingHosts"
+_dash="native-messaging-hosts"
+
+_firefox_local="$HOME/.mozilla/$_dash"
+_firefox_system="/usr/lib/mozilla/$_dash"
+
+_chrome_local="$HOME/.config/google-chrome/$_camel $HOME/.config/chromium/$_camel"
+_chrome_system="/etc/opt/chrome/$_dash /etc/chromium/$_dash"
+
+
+#
+# Call 'purge' as user - mixed mode
+#
+if [[ $1 == "purge" ]] ; then
+	for _dest in $_firefox_local $_chrome_local ; do
+		rm -f $_dest/$_jsonid.json
+	done
+	rm -f $HOME/bin/zeroconf_lookup
+	rm -f $HOME/bin/zeroconf_lookup.conf
+	rm -f $HOME/zeroconf_lookup.conf
+
+	for _dest in $_firefox_system $_chrome_system ; do
+		sudo rm -f $_dest/$_jsonid.json
+	done
+	sudo rm -f /usr/bin/zeroconf_lookup
+	sudo rm -f /usr/bin/zeroconf_lookup.conf
+	sudo rm -f /etc/zeroconf_lookup.conf
+
+	exit 0
+fi
+
+
+#
+# Call 'local' as user - avoid root
+#
 if [[ $1 == "local" ]] ; then
 	mkdir -p $HOME/bin
 	rm -f $HOME/bin/$_binary
 	install -v -m 0755 $_binary $HOME/bin
 
-	_dest=$HOME/.mozilla/native-messaging-hosts
-	mkdir -p $_dest
-	_file=$_dest/$_jsonid.json
-
+	mkdir -p $_firefox_local
+	_file=$_firefox_local/$_jsonid.json
 	cat >$_file <<-_EOF_
 		{
 		  "name": "$_jsonid",
@@ -51,11 +84,9 @@ if [[ $1 == "local" ]] ; then
 	chmod 0644 $_file
 	echo "created $_file"
 
-	for _dest in	$HOME/.config/google-chrome/NativeMessagingHosts \
-			$HOME/.config/chromium/NativeMessagingHosts ; do
+	for _dest in $_chrome_local ; do
 		mkdir -p $_dest
 		_file=$_dest/$_jsonid.json
-
 		cat >$_file <<-_EOF_
 			{
 			  "name": "$_jsonid",
@@ -72,14 +103,16 @@ if [[ $1 == "local" ]] ; then
 	exit 0
 fi
 
+
+#
+# Call 'system' as root - no sudo inside
+#
 if [[ $1 == "system" ]] ; then
 	rm -f /usr/bin/$_binary
 	install -v -o root -g root -m 0755 $_binary /usr/bin
 
-	_dest=/usr/lib/mozilla/native-messaging-hosts
-	mkdir -p $_dest
-	_file=$_dest/$_jsonid.json
-
+	mkdir -p $_firefox_system
+	_file=$_firefox_system/$_jsonid.json
 	cat >$_file <<-_EOF_
 		{
 		  "name": "$_jsonid",
@@ -92,11 +125,9 @@ if [[ $1 == "system" ]] ; then
 	chmod 0644 $_file
 	echo "created $_file"
 
-	for _dest in	/etc/opt/chrome/native-messaging-hosts \
-			/etc/chromium/native-messaging-hosts ; do
+	for _dest in $_chrome_system ; do
 		mkdir -p $_dest
 		_file=$_dest/$_jsonid.json
-
 		cat >$_file <<-_EOF_
 			{
 			  "name": "$_jsonid",
@@ -112,4 +143,13 @@ if [[ $1 == "system" ]] ; then
 
 	exit 0
 fi
+
+cat >&2 <<-_EOF_
+	Usage: $0 purge | local | system
+	    purge  --- remove all binaries and manifests (sudo inside)
+	    local  --- install in user's home directory (without root)
+	    system --- install in /usr and /opt (no sudo inside, call as root)
+_EOF_
+
+exit 1
 

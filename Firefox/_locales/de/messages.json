@@ -24,6 +24,11 @@
     "description": "Display while waiting for responses"
   },
 
+  "htmlError": {
+    "message": "Das hat leider nicht geklappt",
+    "description": "The popup returned an error"
+  },
+
   "htmlCancel": {
     "message": "Abbrechen (Esc geht auch)",
     "description": "Popup window Cancel link"

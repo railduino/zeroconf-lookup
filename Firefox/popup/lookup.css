@@ -14,12 +14,12 @@ html, body {
   font-size: 1.2em;
 }
 
-.button a {
+.button a, #message {
   font-weight: bold;
 }
 
 /* Spinner source: http://tobiasahlin.com/spinkit/ */
-.spinner {
+#spinner {
   margin: 10px auto;
   width: 50px;
   height: 40px;
@@ -27,7 +27,7 @@ html, body {
   font-size: 10px;
 }
 
-.spinner > div {
+#spinner > div {
   background-color: #333;
   height: 100%;
   width: 6px;
@@ -37,22 +37,22 @@ html, body {
   animation: sk-stretchdelay 1.2s infinite ease-in-out;
 }
 
-.spinner .rect2 {
+#spinner .rect2 {
   -webkit-animation-delay: -1.1s;
   animation-delay: -1.1s;
 }
 
-.spinner .rect3 {
+#spinner .rect3 {
   -webkit-animation-delay: -1.0s;
   animation-delay: -1.0s;
 }
 
-.spinner .rect4 {
+#spinner .rect4 {
   -webkit-animation-delay: -0.9s;
   animation-delay: -0.9s;
 }
 
-.spinner .rect5 {
+#spinner .rect5 {
   -webkit-animation-delay: -0.8s;
   animation-delay: -0.8s;
 }

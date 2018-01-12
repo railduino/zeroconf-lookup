@@ -26,9 +26,13 @@ ifeq ($(OS),Windows_NT)
   CCFLAGS += -D__windows__
 else
   CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+
   UNAME_S := $(shell uname -s)
   ifeq ($(UNAME_S),Linux)
-    LDFLAGS += -L/usr/lib/x86_64-linux-gnu -lavahi-client -lavahi-common
+    CFLAGS += $(shell pkg-config --cflags avahi-client)
+  endif
+  ifeq ($(UNAME_S),Linux)
+    LDFLAGS += $(shell pkg-config --libs avahi-client)
   endif
 endif
 

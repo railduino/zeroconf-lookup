@@ -1,18 +1,23 @@
 //
 // Written by Volker Wiegand <volker@railduino.de>
 //
-// License: See https://github.com/volkerwiegand/zeroconf-lookup/blob/master/LICENSE
+// See https://github.com/railduino/zeroconf-lookup/
 //
 
 function onError(error) {
-  console.log(`Error: ${error}`);
+  var err_msg = `${error}`;
+
+  document.getElementById("waiting").textContent = browser.i18n.getMessage("htmlError");
+  document.getElementById("message").textContent = err_msg;
+  document.getElementById("spinner").style.display = "none";
+  console.log(err_msg);
 }
 
 function onResponse(response) {
   var str = JSON.stringify(response, null, 2);
 
   var server_list = document.getElementById("server_list");
-  server_list.innerHTML = "";
+  server_list.textContent = "";
 
   var i, server, a, hr, br, span;
   for (i in response.result) {
@@ -48,16 +53,12 @@ function onResponse(response) {
   }, false);
 }
 
-var elem;
-elem = document.getElementById("header");
-elem.textContent = browser.i18n.getMessage("htmlHeader");
+document.getElementById("header").textContent = browser.i18n.getMessage("htmlHeader");
+document.getElementById("waiting").textContent = browser.i18n.getMessage("htmlWaiting");
 
-elem = document.getElementById("waiting");
-elem.textContent = browser.i18n.getMessage("htmlWaiting");
-
-elem = document.getElementById("cancel");
-elem.textContent = browser.i18n.getMessage("htmlCancel");
-elem.onclick = function() { window.close(); };
+var cancel = document.getElementById("cancel");
+cancel.textContent = browser.i18n.getMessage("htmlCancel");
+cancel.onclick = function() { window.close(); };
 
 var sending = browser.runtime.sendNativeMessage("com.railduino.zeroconf_lookup", "Lookup");
 sending.then(onResponse, onError);

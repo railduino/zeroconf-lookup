@@ -186,6 +186,8 @@ send_result(char *source, int json, result_t *result)
 	length_t length;
 	result_t *runner;
 
+	util_info("source: %s", source);
+
 	UTIL_STRCPY(prolog, "{\n  \"version\": 2,\n");
 	util_append(prolog, sizeof(prolog), "  \"source\": \"%s\",\n", source);
 	UTIL_STRCAT(prolog, "  \"result\": [\n");
