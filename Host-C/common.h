@@ -26,46 +26,51 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <fcntl.h>
 #include <stdarg.h>
-#include <syslog.h>
+#include <string.h>
 #include <time.h>
 #include <errno.h>
-#include <err.h>
-#include <unistd.h>
-#include <regex.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <sys/types.h>
+
+#if defined(__unix__)
+#  include <unistd.h>
+#  include <stdint.h>
+#endif
 
 
-typedef struct server_t {
-	struct server_t	*next;
+typedef struct _result {
+	struct _result	*next;
 	char		*text;
 } result_t;
 
 
 typedef union {
-	unsigned int as_uint;
-	char         as_char[4];
+	uint32_t	as_uint;
+	char		as_char[4];
 } length_t;
 
 
-// Prototypes for avahi.c
+// Prototypes for avahi.c (Linux only)
 
-int avahi_browse(void);
-result_t *avahi_get_result(void);
-void avahi_init(void);
+result_t *avahi_browse(void);
+int avahi_found(void);
 
 
-// Prototypes for mdnssd.c
+// Prototypes for dnssd.c (mDNSResponder: Apple and Windows)
 
-int mdnssd_browse(void);
-result_t *mdnssd_get_result(void);
-void mdnssd_init(void);
+result_t *dnssd_browse(void);
+int dnssd_found(void);
+
+
+// Prototypes for query.c (built-in fallback, anywhere)
+
+result_t *query_browse(void);
+int query_found(void);
+
+
+// Prototypes for empty.c (if nothing else worked / template)
+
+result_t *empty_browse(void);
+int empty_found(void);
 
 
 // Prototypes for options.c
@@ -88,11 +93,13 @@ void util_free(void *ptr);
 
 char *util_strcpy(char *dst, char *src, size_t len);
 char *util_strcat(char *dst, char *src, size_t len);
+char *util_strtrim(char *src, char trim);
 char *util_append(char *dst, size_t len, char *fmt, ...);
 
-void util_verbose(void);
-void util_set_log(char *ident);
-void util_debug(char *msg, ...);
+void util_inc_verbose(void);
+int  util_get_verbose(void);
+void util_open_logfile(char *logfile);
+void util_debug(int level, char *msg, ...);
 void util_info(char *msg, ...);
 void util_warn(char *msg, ...);
 void util_error(char *msg, ...);
