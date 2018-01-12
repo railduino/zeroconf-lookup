@@ -27,7 +27,8 @@
 #include "common.h"
 
 
-static int verbose = 0;
+static int   my_verbose = 0;
+static FILE *my_logfile = NULL;
 
 
 void *
@@ -51,7 +52,7 @@ util_realloc(void *ptr, size_t size, size_t prev)
 	}
 
 	if (size > prev) {
-		memset(ptr + prev, '\0', size - prev);
+		memset((char *) ptr + prev, '\0', size - prev);
 	}
 
 	return ptr;
@@ -79,7 +80,7 @@ util_strdup(char *str)
 void
 util_free(void *ptr)
 {
-	if (ptr) {
+	if (ptr != NULL) {
 		free(ptr);
 	}
 }
@@ -104,14 +105,41 @@ util_strcat(char *dst, char *src, size_t len)
 {
 	size_t siz;
 
-	if (dst == NULL || src == NULL)
+	if (dst == NULL || src == NULL) {
 		return NULL;
+	}
+
 	siz = strlen(dst);
 
 	memset(dst + siz, 0, len - siz);
 	strncpy(dst + siz, src, len - siz - 1);
 
 	return dst;
+}
+
+
+char *
+util_strtrim(char *src, char trim)
+{
+	size_t siz;
+
+	if (src == NULL) {
+		return NULL;
+	}
+
+	while (*src == trim) {
+		memmove(src, src + 1, strlen(src));
+	}
+
+	while ((siz = strlen(src)) > 0) {
+		if (src[siz-1] == trim) {
+			src[siz-1] = '\0';
+		} else {
+			break;
+		}
+	}
+
+	return src;
 }
 
 
@@ -130,36 +158,75 @@ util_append(char *dst, size_t len, char *fmt, ...)
 
 
 void
-util_verbose(void)
+util_inc_verbose(void)
 {
-	verbose++;
+	my_verbose++;
+}
+
+
+int
+util_get_verbose(void)
+{
+	return my_verbose;
 }
 
 
 static void
-util_close_log(void)
+util_close_logfile(void)
 {
-	syslog(LOG_INFO, "Program terminated");
-	closelog();
+	util_info("touch-down");
+
+	if (my_logfile != NULL) {
+		if (my_logfile != stderr) {
+			fclose(my_logfile);
+		}
+		my_logfile = NULL;
+	}
 }
 
 
 void
-util_set_log(char *ident)
+util_open_logfile(char *logfile)
 {
-	openlog(ident, LOG_CONS | LOG_PID | LOG_NDELAY, LOG_USER);
-	atexit(util_close_log);
-
-	if (options_use_debug() == 0) {
-		setlogmask(LOG_UPTO(LOG_INFO));
+	if (logfile == NULL || strcmp("none", logfile) == 0) {
+		return;
 	}
 
-	syslog(LOG_INFO, "Program started by User %d", getuid());
+	atexit(util_close_logfile);
+
+	if (strcmp("stderr", logfile) == 0) {
+		my_logfile = stderr;
+	} else if ((my_logfile = fopen(logfile, "w")) == NULL) {
+		util_fatal("can't create logfile %s: %s", logfile, strerror(errno));
+	}
+
+	util_info("take-off");
+}
+
+
+static void
+util_write_logfile(int tag, char *line)
+{
+	time_t now = time(NULL);
+	char   *typ;
+
+	if (my_logfile != NULL) {
+		switch (tag) {
+			case 'D': typ = "DEBUG"; break;
+			case 'I': typ = "INFO "; break;
+			case 'W': typ = "WARN "; break;
+			case 'E': typ = "ERROR"; break;
+			case 'F': typ = "FATAL"; break;
+			default: return;
+		}
+
+		fprintf(my_logfile, "%.19s %s -- %s\n", ctime(&now), typ, line);
+	}
 }
 
 
 void
-util_debug(char *fmt, ...)
+util_debug(int level, char *fmt, ...)
 {
 	char buffer[1000];
 	va_list ap;
@@ -168,9 +235,8 @@ util_debug(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	syslog(LOG_DEBUG, "%s", buffer);
-	if (verbose) {
-		fprintf(stderr, "DEBUG: %s\n", buffer);
+	if (level <= my_verbose) {
+		util_write_logfile('D', buffer);
 	}
 }
 
@@ -185,10 +251,7 @@ util_info(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	syslog(LOG_INFO, "%s", buffer);
-	if (verbose) {
-		fprintf(stderr, "INFO:  %s\n", buffer);
-	}
+	util_write_logfile('I', buffer);
 }
 
 
@@ -202,10 +265,7 @@ util_warn(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	syslog(LOG_WARNING, "%s", buffer);
-	if (verbose) {
-		fprintf(stderr, "WARN:  %s\n", buffer);
-	}
+	util_write_logfile('W', buffer);
 }
 
 
@@ -219,10 +279,7 @@ util_error(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	syslog(LOG_ERR, "%s", buffer);
-	if (verbose) {
-		fprintf(stderr, "ERROR: %s\n", buffer);
-	}
+	util_write_logfile('E', buffer);
 }
 
 
@@ -236,9 +293,7 @@ util_fatal(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	syslog(LOG_CRIT, "%s (exiting)", buffer);
-	fprintf(stderr, "FATAL: %s\n", buffer);
-
+	util_write_logfile('F', buffer);
 	exit(EXIT_FAILURE);
 }
 

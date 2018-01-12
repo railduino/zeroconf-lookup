@@ -24,7 +24,7 @@
  *
  ****************************************************************************/
 
-#include "zeroconf_lookup.h"
+#include "common.h"
 
 #if defined(__APPLE__) || defined(_WIN32)
 
