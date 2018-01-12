@@ -42,33 +42,33 @@ Eventually Go and Python might be interesting. It uses Avahi on Linux
 and Windows there are plans to use mDNSResponder.
 
 1.  Download or clone this repository
-2.  Change dir into **Host-C** and run ***make***
-3.  For user installation run ***make ****local*** (does not require
+2.  Change dir into **Host-C** and run **make**
+3.  For user installation run **make local** (does not require
     root privileges)
-4.  For system wide installation run ***sudo m****ake ****system***
-    (requires root privileges)
+4.  For system wide installation run **sudo make system** (requires
+    root privileges)
 
 The steps 3 and 4 also install the manifest used by Firefox (and also
 the one for Chrome) in the standard location.
 
 If Avahi ist available, the answers usually come in immediately, because
-the ***avahi‑daemon*** maintains current state. Otherwise the program
+the **avahi‑daemon** maintains current state. Otherwise the program
 waits for 3 seconds and returns all collected answers. So far, I have
 not been able to use connection-based messaging, only connectionless. A
 possible hint can be found under
 <https://discourse.mozilla.org/t/connection-based-native-messaging-doesnt-work-in-popups/17185>
 
-The C program sends Log output to ***/****tmp/zeroconf\_lookup.log***.
-By means of a config file it is possible to send also ***DEBUG***
-messages. See below for configuring. Since this logfile will be
-overwritten by every invocation, it will not grow.
+The C program sends Log output to **/tmp/zeroconf\_lookup.log**. By
+means of a config file it is possible to also send **DEBUG** messages.
+See below for configuring. Since this logfile will be overwritten by
+every invocation, it will not grow.
 
 ### Configuration
 
 Firefox always calls the application without command line parameters.
-There are variables that can be changed, and ***zeroconf\_lookup***
-checks for them in several standard locations. The first one found is
-used, so locations cannot be mixed.
+There are variables that can be changed, and **zeroconf\_lookup** checks
+for them in several standard locations. The first one found is used, so
+locations cannot be mixed.
 
 The variables and their default value are:
 
