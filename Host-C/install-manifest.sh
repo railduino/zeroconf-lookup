@@ -27,7 +27,7 @@ set -e
 
 _extens="knldjmfmopnpolahpmmgbagdohdnhkik"
 _jsonid="com.railduino.zeroconf_lookup"
-_inform="Find HTTP Services in the .local domain using Zeroconf (mDNS-SD)"
+_inform="Find HTTP Servers in the .local domain using Zeroconf"
 _binary="zeroconf_lookup"
 
 if [[ $1 == "local" ]] ; then
