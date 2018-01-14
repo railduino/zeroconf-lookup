@@ -119,20 +119,23 @@ util_strcat(char *dst, char *src, size_t len)
 
 
 char *
-util_strtrim(char *src, char trim)
+util_strtrim(char *src, char *trim)
 {
 	size_t siz;
 
 	if (src == NULL) {
 		return NULL;
 	}
+	if (trim == NULL) {
+		trim = " \t\n";
+	}
 
-	while (*src == trim) {
+	while (strlen(src) > 0 && strchr(trim, *src) != NULL) {
 		memmove(src, src + 1, strlen(src));
 	}
 
 	while ((siz = strlen(src)) > 0) {
-		if (src[siz-1] == trim) {
+		if (strchr(trim, src[siz-1]) != NULL) {
 			src[siz-1] = '\0';
 		} else {
 			break;
@@ -191,7 +194,6 @@ util_open_logfile(char *logfile)
 	if (logfile == NULL || strcmp("none", logfile) == 0) {
 		return;
 	}
-
 	atexit(util_close_logfile);
 
 	if (strcmp("stderr", logfile) == 0) {
@@ -200,7 +202,7 @@ util_open_logfile(char *logfile)
 		util_fatal("can't create logfile %s: %s", logfile, strerror(errno));
 	}
 
-	util_info("take-off");
+	util_info("take-off logging=%d", my_verbose);
 }
 
 

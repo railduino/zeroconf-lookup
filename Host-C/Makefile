@@ -25,14 +25,11 @@
 ifeq ($(OS),Windows_NT)
   CCFLAGS += -D__windows__
 else
-  CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
-
+  CFLAGS += -g -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wunused-result -Wpointer-arith -Wcast-qual -Winline -Werror
   UNAME_S := $(shell uname -s)
   ifeq ($(UNAME_S),Linux)
-    CFLAGS += $(shell pkg-config --cflags avahi-client)
-  endif
-  ifeq ($(UNAME_S),Linux)
-    LDFLAGS += $(shell pkg-config --libs avahi-client)
+    CFLAGS  += $(shell pkg-config --cflags avahi-client)
+    LDFLAGS += $(shell pkg-config --libs   avahi-client)
   endif
 endif
 
@@ -55,13 +52,13 @@ tags:
 	ctags *.[ch]
 
 run: zeroconf_lookup
-	@./zeroconf_lookup -j
+	./zeroconf_lookup -j
 
 debug: zeroconf_lookup
-	ZEROCONF_LOOKUP="verbose=1" ./zeroconf_lookup -j
+	./zeroconf_lookup -jv
 
-deep: zeroconf_lookup
-	ZEROCONF_LOOKUP="verbose=9" ./zeroconf_lookup -j
+chatty: zeroconf_lookup
+	./zeroconf_lookup -jvvvvvv
 
 local: zeroconf_lookup
 	./install-manifest.sh local
@@ -69,18 +66,9 @@ local: zeroconf_lookup
 system: zeroconf_lookup
 	sudo ./install-manifest.sh system
 
+uninstall:
+	./install-manifest.sh purge
+
 log: zeroconf_lookup
 	tail -f /tmp/zeroconf_lookup.log
-
-uninstall:
-	rm -f ~/.mozilla/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
-	rm -f ~/.config/google-chrome/NativeMessagingHosts/com.railduino.chrome.zeroconf_lookup.json
-	rm -f ~/.config/chromium/NativeMessagingHosts/com.railduino.chrome.zeroconf_lookup.json
-	rm -f ~/bin/zeroconf_lookup
-	sudo rm -f /usr/lib/mozilla/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
-	sudo rm -f /etc/opt/chrome/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
-	sudo rm -f /etc/chromium/native-messaging-hosts/com.railduino.chrome.zeroconf_lookup.json
-	sudo rm -f /usr/bin/zeroconf_lookup
-	rm -f ~/bin/zeroconf_lookup.conf ~/zeroconf_lookup.conf
-	sudo rm -f /etc/zeroconf_lookup.conf
 

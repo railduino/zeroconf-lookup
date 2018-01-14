@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#if defined(HAVE_QUERY)
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -43,13 +45,6 @@
 
 static int      my_sock     = 0;
 static result_t *my_results = NULL;
-
-
-int
-query_found(void)
-{
-	return 1;
-}
 
 
 static void
@@ -287,7 +282,9 @@ query_browse(void)
 	atexit(query_cleanup);
 
 	util_info("using mDNS-SD query for discovery");
-	time_up = time(NULL) + options_get_timeout();
+	time_up = time(NULL) + options_get_number("Timeout", 3);;
+
+	// TODO replace select with poll
 
 	for (query = 1; ; ) {
 		if (time(NULL) >= time_up) {
@@ -317,4 +314,6 @@ query_browse(void)
 
 	return my_results;
 }
+
+#endif /* defined(HAVE_QUERY) */
 

@@ -26,17 +26,8 @@
 
 #include "common.h"
 
-#if defined(__STDC__)
-
 
 static result_t *my_results = NULL;
-
-
-int
-empty_found(void)
-{
-	return 1;
-}
 
 
 static void
@@ -62,21 +53,4 @@ empty_browse(void)
 
 	return my_results;
 }
-
-#else /* __STDC__ */
-
-int
-empty_found(void)
-{
-	return 0;
-}
-
-
-result_t *
-empty_browse(void)
-{
-	return NULL;
-}
-
-#endif /* __STDC__ */
 

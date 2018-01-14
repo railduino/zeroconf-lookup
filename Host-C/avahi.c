@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#if defined(__linux__)
+#if defined(HAVE_AVAHI)
 
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
@@ -35,17 +35,11 @@
 #include <avahi-common/error.h>
 
 
+static result_t *my_results = NULL;
+
 static AvahiSimplePoll     *my_poll    = NULL;
 static AvahiClient         *my_client  = NULL;
 static AvahiServiceBrowser *my_browser = NULL;
-static result_t            *my_results = NULL;
-
-
-int
-avahi_found(void)
-{
-	return 1;
-}
 
 
 static void
@@ -85,7 +79,7 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 		const AvahiAddress *address, uint16_t port, AvahiStringList *txt,
 		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, AVAHI_GCC_UNUSED void *userdata)
 {
-	char answer[FILENAME_MAX], tmp_adr[AVAHI_ADDRESS_STR_MAX], tmp_txt[FILENAME_MAX];
+	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], tmp_txt[1024], url[1024];
 	result_t *result;
 
 	if (event == AVAHI_RESOLVER_FAILURE) {
@@ -94,10 +88,11 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 		return;
 	}
 	if (event != AVAHI_RESOLVER_FOUND) {
-		util_debug(2, "avahi_resolve_callback() unknown event %d", event);
+		util_debug(3, "avahi_resolve_callback() unknown event %d", event);
 		avahi_service_resolver_free(r);
 		return;
 	}
+	util_debug(3, "avahi_resolve_callback() event: AVAHI_RESOLVER_FOUND %s", host_name);
 
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
 	if (port == 3689) {
@@ -106,21 +101,24 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 		char *t = avahi_string_list_to_string(txt);
 		UTIL_STRCPY(tmp_txt, t);
 		avahi_free(t);
+		util_strtrim(tmp_txt, "\"");
 	}
+	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
 
 	UTIL_STRCPY(answer, "    {\n");
 	util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n",   name);
-	util_append(answer, sizeof(answer), "      \"txt\": \"%s\",\n",    util_strtrim(tmp_txt, '"'));
+	util_append(answer, sizeof(answer), "      \"txt\": \"%s\",\n",    tmp_txt);
 	util_append(answer, sizeof(answer), "      \"target\": \"%s\",\n", host_name);
 	util_append(answer, sizeof(answer), "      \"port\": %u,\n",       port);
 	util_append(answer, sizeof(answer), "      \"a\": \"%s\",\n",      tmp_adr);
-	util_append(answer, sizeof(answer), "      \"url\": \"http://%s:%u/\"\n", tmp_adr, port);
+	util_append(answer, sizeof(answer), "      \"url\": \"%s\"\n",     url);
 	UTIL_STRCAT(answer, "    }");
 
 	avahi_service_resolver_free(r);
 
 	for (result = my_results; result != NULL; result = result->next) {
 		if (strcmp(result->text, answer) == 0) {
+			util_debug(1, "Avahi duplicate: %s", name);
 			return;		// duplicate entry
 		}
 	}
@@ -129,6 +127,8 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 	result->next = my_results;
 	result->text = util_strdup(answer);
 	my_results = result;
+
+	util_info("Avahi found %s for %s", url, name);
 }
 
 
@@ -150,11 +150,15 @@ avahi_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProto
 				AVAHI_PROTO_UNSPEC, 0, avahi_resolve_callback, c) == NULL) {
 			util_error("avahi_browse_callback() error for %s: %s", name, avahi_strerror(avahi_client_errno(c)));
 		}
+		util_debug(3, "avahi_browse_callback() event: AVAHI_BROWSER_NEW");
 		return;
 	}
 
-	 if (event == AVAHI_BROWSER_ALL_FOR_NOW) {
+	if (event == AVAHI_BROWSER_ALL_FOR_NOW) {
+		util_debug(3, "avahi_browse_callback() event: AVAHI_BROWSER_ALL_FOR_NOW");
 		avahi_simple_poll_quit(my_poll);
+	} else {
+		util_debug(3, "avahi_browse_callback() event: %d", (int) event);
 	}
 }
 
@@ -166,6 +170,8 @@ avahi_client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED v
 		util_error("avahi_client_callback() error %s", avahi_strerror(avahi_client_errno(c)));
 		avahi_simple_poll_quit(my_poll);
 	}
+
+	util_debug(3, "avahi_client_callback() state: %d", (int) state);
 }
 
 
@@ -174,6 +180,7 @@ avahi_browse(void)
 {
 	int error;
 
+	util_info("calling Avahi browser");
 	atexit(avahi_cleanup);
 
 	my_poll = avahi_simple_poll_new();
@@ -181,12 +188,14 @@ avahi_browse(void)
 		util_error("avahi_simple_poll_new() failed");
 		return NULL;
 	}
+	util_debug(3, "success: avahi_simple_poll_new()");
 
 	my_client = avahi_client_new(avahi_simple_poll_get(my_poll), 0, avahi_client_callback, NULL, &error);
 	if (my_client == NULL) {
 		util_error("avahi_client_new() error %s", avahi_strerror(error));
 		return NULL;
 	}
+	util_debug(3, "success: avahi_client_new()");
 
 	my_browser = avahi_service_browser_new(my_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
 			"_http._tcp", NULL, 0, avahi_browse_callback, my_client);
@@ -194,26 +203,12 @@ avahi_browse(void)
 		fprintf(stderr, "avahi_service_browser_new() error %s", avahi_strerror(avahi_client_errno(my_client)));
 		return NULL;
 	}
+	util_debug(3, "success: avahi_service_browser_new()");
 
 	avahi_simple_poll_loop(my_poll);
 
 	return my_results;
 }
 
-#else /* __linux__ */
-
-int
-avahi_found(void)
-{
-	return 0;
-}
-
-
-result_t *
-avahi_browse(void)
-{
-	return NULL;
-}
-
-#endif /* __linux__ */
+#endif /* defined(HAVE_AVAHI) */
 

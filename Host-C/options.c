@@ -26,67 +26,80 @@
 
 #include "common.h"
 
-#define DEFAULT_TIMEOUT		3
-#define DEFAULT_AVAHI		1
-#define DEFAULT_DEBUG		0
+
+typedef struct _option {
+	struct _option	*next;
+	char		*name;
+	char		*text;
+} option_t;
 
 
-static int timeout = DEFAULT_TIMEOUT;
-static int avahi   = DEFAULT_AVAHI;
-static int debug   = DEFAULT_DEBUG;
+static option_t *my_options = NULL;
 
 
-int
-options_get_timeout(void)
+char *
+options_get_string(char *name, char *dflt)
 {
-	return timeout;
+	option_t *option;
+
+	util_debug(1, "check option %s (%s)", name, dflt);
+
+	for (option = my_options; option != NULL; option = option->next) {
+		if (strcasecmp(name, option->name) == 0) {
+			util_debug(1, "++ found '%s'", option->text);
+			return option->text;
+		}
+	}
+
+	util_debug(1, "++ default '%s'", dflt);
+	return dflt;
 }
 
 
 int
-options_use_avahi(void)
+options_get_number(char *name, int dflt)
 {
-	return avahi;
-}
+	char temp[32], *ptr;
 
+	snprintf(temp, sizeof(temp), "%d", dflt);
+	ptr = options_get_string(name, temp);
 
-int
-options_use_debug(void)
-{
-	return debug;
+	return (*ptr == '1' || *ptr == 'Y' || *ptr == 'y') ? 1 : 0;
 }
 
 
 static void
-options_read_value(char *line)
+options_scan_line(char *line)
 {
-	int result;
+	option_t *option;
+	char *ptr;
 
-	if (sscanf(line, "timeout=%d", &result) == 1) {
-		if (result >= 1 && result <= 9) {
-			timeout = result;
-		} else {
-			util_error("timeout must be from 1 to 9, but is %d", result);
-		}
+	if (line == NULL || *line == '#' || *line == '\n') {
 		return;
 	}
 
-	if (sscanf(line, "avahi=%d", &result) == 1) {
-		if (result == 0 || result == 1) {
-			avahi = result;
-		} else {
-			util_error("avahi must be 0 or 1, but is %d", result);
-		}
-		return;
+	if ((ptr = strchr(line, '=')) != NULL) {
+		*ptr++ = '\0';
+		option = util_malloc(sizeof(option_t));
+		option->name = util_strdup(util_strtrim(line, NULL));
+		option->text = util_strdup(util_strtrim(ptr,  NULL));
+		option->next = my_options;
+		my_options = option;
 	}
+}
 
-	if (sscanf(line, "debug=%d", &result) == 1) {
-		if (result == 0 || result == 1) {
-			debug = result;
-		} else {
-			util_error("debug must be 0 or 1, but is %d", result);
-		}
-		return;
+
+static void
+options_cleanup(void)
+{
+	option_t *option;
+
+	while (my_options != NULL) {
+		option = my_options->next;
+		util_free(my_options->name);
+		util_free(my_options->text);
+		util_free(my_options);
+		my_options = option;
 	}
 }
 
@@ -97,10 +110,12 @@ options_init(char *argv0)
 	char config[FILENAME_MAX], line[1024], *ptr;
 	FILE *fp = NULL;
 
+	atexit(options_cleanup);
+
 	if ((ptr = getenv("ZEROCONF_LOOKUP")) != NULL) {
 		UTIL_STRCPY(config, ptr);
-		for (ptr = strtok(config, ",:;"); ptr != NULL; ptr = strtok(NULL, ",:;")) {
-			options_read_value(ptr);
+		for (ptr = strtok(config, ",\n"); ptr != NULL; ptr = strtok(NULL, ",\n")) {
+			options_scan_line(ptr);
 		}
 	}
 
@@ -121,13 +136,14 @@ options_init(char *argv0)
 		fp = fopen(ptr, "r");
 	}
 	if (fp == NULL) {
-		// no config, will use defaults
+		util_info("use default config");
+		// no config, will use empty strings
 		return;
 	}
 	util_info("read config from %s", ptr);
 
 	while (fgets(line, sizeof(line), fp) != NULL) {
-		options_read_value(line);
+		options_scan_line(line);
 	}
 
 	fclose(fp);

@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#if defined(HAVE_QUERY)
+
 #include "parser.h"
 
 
@@ -378,4 +380,6 @@ parser_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 
 	return num;
 }
+
+#endif /* defined(HAVE_QUERY) */
 

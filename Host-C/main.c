@@ -26,33 +26,16 @@
 
 #include "common.h"
 
-#define VERSION		"1.0.0"
 
-#if defined(__unix__)
-#  include <getopt.h>
-#  include <poll.h>
-#  if defined(__APPLE__)
-#    define DEFAULT_LOGFILE	"/tmp/zeroconf_lookup.log"
-#  else
-#    define DEFAULT_LOGFILE	"/tmp/zeroconf_lookup.log"
-#  endif
-#elif defined(_WIN32)
-#  include <Windows.h>
-#    define DEFAULT_LOGFILE	"use mktemp()"
-#endif
-
-
+#if defined(HAVE_GETOPT_LONG)
 static struct option long_options[] = {
-	{ "avahi",   no_argument,       NULL, 'a' },
-	{ "dnssd",   no_argument,       NULL, 'd' },
-	{ "empty",   no_argument,       NULL, 'e' },
 	{ "help",    no_argument,       NULL, 'h' },
 	{ "json",    no_argument,       NULL, 'j' },
 	{ "log",     required_argument, NULL, 'l' },
-	{ "query",   no_argument,       NULL, 'q' },
 	{ "verbose", no_argument,       NULL, 'v' },
 	{ NULL, 0, NULL, 0 }
 };
+#endif
 
 static char     my_input[64];
 static length_t my_length;
@@ -67,14 +50,10 @@ usage(char *name, int retval)
 
 	fprintf(fp, "Railduino zeroconf_lookup Version %s\n", VERSION);
 	fprintf(fp, "Usage: %s [options ...]\n", name);
-	fprintf(fp, "      -a|--avahi        Ignore Avahi interface altogether\n");
-	fprintf(fp, "      -d|--dnssd        Ignore DNS-SD interface altogether\n");
-	fprintf(fp, "      -e|--empty        Ignore Empty interface altogether\n");
 	fprintf(fp, "      -h|--help         Display usage and exit\n");
 	fprintf(fp, "      -j|--json         Use human readable length\n");
-	fprintf(fp, "      -l|--log=<file>   Change logfile [default %s]\n", DEFAULT_LOGFILE);
-	fprintf(fp, "                        Recognizes 'none' or 'stderr'\n");
-	fprintf(fp, "      -q|--query        Ignore Query interface altogether\n");
+	fprintf(fp, "      -l|--log=<file>   Change logfile (default %s)\n", DEFAULT_LOGFILE);
+	fprintf(fp, "                        Recognizes 'none' for silence or 'stderr'\n");
 	fprintf(fp, "      -v|--verbose      Increase verbosity level\n");
 
 	exit(retval);
@@ -110,7 +89,7 @@ handle_input_byte(char chr)
 	}
 
 	if (++my_input_offset == my_length.as_uint) {
-		util_info("input complete: '%s'", util_strtrim(my_input, '"'));
+		util_info("input complete: '%s'", util_strtrim(my_input, "\""));
 		return 1;
 	}
 
@@ -121,7 +100,7 @@ handle_input_byte(char chr)
 static void
 receive_input(void)
 {
-#if defined(__unix__)
+#if defined(HAVE_POLL)
 	util_debug(1, "awaiting input (poll)");
 	for (;;) {
 		struct pollfd fds[1];
@@ -186,8 +165,6 @@ send_result(char *source, int json, result_t *result)
 	length_t length;
 	result_t *runner;
 
-	util_info("source: %s", source);
-
 	UTIL_STRCPY(prolog, "{\n  \"version\": 2,\n");
 	util_append(prolog, sizeof(prolog), "  \"source\": \"%s\",\n", source);
 	UTIL_STRCAT(prolog, "  \"result\": [\n");
@@ -223,24 +200,19 @@ send_result(char *source, int json, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, ofs, json, avahi, dnssd, empty, query;
+	int c, ofs, json;
 	char *logfile = DEFAULT_LOGFILE;
 
-	for (ofs = json = 0, avahi = dnssd = empty = query = 1; ; ) {
-		c = getopt_long(argc, argv, "adeh?jl:qv", long_options, &ofs);
+	for (ofs = json = 0; ; ) {
+#if defined(HAVE_GETOPT_LONG)
+		c = getopt_long(argc, argv, "h?jl:v", long_options, &ofs);
+#else
+		c = getopt(argc, argv, "h?jl:v");
+#endif
 		if (c < 0) {
 			break;
 		}
 		switch (c) {
-			case 'a':
-				avahi = 0;
-				break;
-			case 'd':
-				dnssd = 0;
-				break;
-			case 'e':
-				empty = 0;
-				break;
 			case 'h':
 			case '?':
 				usage(argv[0], EXIT_SUCCESS);
@@ -250,9 +222,6 @@ main(int argc, char *argv[])
 				break;
 			case 'l':
 				logfile = optarg;
-				break;
-			case 'q':
-				query = 0;
 				break;
 			case 'v':
 				util_inc_verbose();
@@ -269,27 +238,30 @@ main(int argc, char *argv[])
 	if (json == 0) {
 		receive_input();
 	}
+	util_debug(1, "ready for scanning");
 
-	if (avahi && avahi_found()) {
+#if defined(HAVE_AVAHI)
+	if (options_get_number("Avahi", 1) == 1) {
 		send_result("Avahi", json, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
+#endif
 
-	if (dnssd && dnssd_found()) {
-		send_result("DNS-SD", json, dnssd_browse());
+#if defined(HAVE_DNSSD)
+	if (options_get_number("mDNSResponder", 1) == 1) {
+		send_result("mDNSResponder", json, dnssd_browse());
 		exit(EXIT_SUCCESS);
 	}
+#endif
 
-	if (query && query_found()) {
-		send_result("Query", json, query_browse());
+#if defined(HAVE_QUERY)
+	if (options_get_number("mDNS-SD Query", 1) == 1) {
+		send_result("mDNS-SD Query", json, query_browse());
 		exit(EXIT_SUCCESS);
 	}
+#endif
 
-	if (empty && empty_found()) {
-		send_result("Empty", json, empty_browse());
-		exit(EXIT_SUCCESS);
-	}
-
-	util_fatal("no discovery method");
+	send_result("Blank", json, empty_browse());
+	exit(EXIT_SUCCESS);
 }
 

@@ -24,16 +24,37 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <time.h>
-#include <errno.h>
+#define VERSION		"1.0.1"
 
-#if defined(__unix__)
+#if defined(__STDC__)
+#  include <stdio.h>
+#  include <stdlib.h>
+#  include <stdarg.h>
+#  include <string.h>
+#  include <time.h>
+#  include <errno.h>
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
 #  include <unistd.h>
 #  include <stdint.h>
+#  define HAVE_POLL 1
+#  include <poll.h>
+#  define HAVE_GETOPT_LONG 1
+#  include <getopt.h>
+#  define DEFAULT_LOGFILE "/tmp/zeroconf_lookup.log"
+#  if defined(__linux__)
+#    define HAVE_AVAHI 1
+#  endif
+#  if defined(__APPLE__)
+#    define HAVE_DNSSD 1
+#  endif
+#  define HAVE_QUERY 1
+#endif
+
+#if defined(_WIN32)
+#  include <Windows.h>
+#  define HAVE_DNSSD 1
 #endif
 
 
@@ -51,33 +72,34 @@ typedef union {
 
 // Prototypes for avahi.c (Linux only)
 
+#if defined(HAVE_AVAHI)
 result_t *avahi_browse(void);
-int avahi_found(void);
+#endif
 
 
-// Prototypes for dnssd.c (mDNSResponder: Apple and Windows)
+// Prototypes for dnssd.c (mDNSResponder)
 
+#if defined(HAVE_DNSSD)
 result_t *dnssd_browse(void);
-int dnssd_found(void);
+#endif
 
 
-// Prototypes for query.c (built-in fallback, anywhere)
+// Prototypes for query.c (built-in mDNS-SD)
 
+#if defined(HAVE_QUERY)
 result_t *query_browse(void);
-int query_found(void);
+#endif
 
 
-// Prototypes for empty.c (if nothing else worked / template)
+// Prototypes for empty.c (if nothing else worked)
 
 result_t *empty_browse(void);
-int empty_found(void);
 
 
 // Prototypes for options.c
 
-int options_get_timeout(void);
-int options_use_avahi(void);
-int options_use_debug(void);
+char *options_get_string(char *name, char *dflt);
+int options_get_number(char *name, int dflt);
 void options_init(char *argv0);
 
 
@@ -93,7 +115,7 @@ void util_free(void *ptr);
 
 char *util_strcpy(char *dst, char *src, size_t len);
 char *util_strcat(char *dst, char *src, size_t len);
-char *util_strtrim(char *src, char trim);
+char *util_strtrim(char *src, char *trim);
 char *util_append(char *dst, size_t len, char *fmt, ...);
 
 void util_inc_verbose(void);

@@ -26,19 +26,12 @@
 
 #include "common.h"
 
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(HAVE_DNSSD)
 
 #include <dns_sd.h>
 
 
 static result_t *my_results = NULL;
-
-
-int
-dnssd_found(void)
-{
-	return 1;
-}
 
 
 static void
@@ -63,20 +56,5 @@ dnssd_browse(void)
 	return my_results;
 }
 
-#else /* defined(__APPLE__) || defined(_WIN32) */
-
-int
-dnssd_found(void)
-{
-	return 0;
-}
-
-
-result_t *
-dnssd_browse(void)
-{
-	return NULL;
-}
-
-#endif /* defined(__APPLE__) || defined(_WIN32) */
+#endif /* defined(HAVE_DNSSD) */
 
