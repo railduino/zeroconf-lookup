@@ -108,6 +108,7 @@ query_read_answer(void)
 			}
 			continue;
 		}
+
 		if (rrp->rr_type == DNS_RR_TYPE_PTR) {
 			name = rrp->rr.rr_ptr.ptr_dname;
 			if ((ptr = strstr(name, "._http._tcp.local")) != NULL) {
@@ -122,17 +123,23 @@ query_read_answer(void)
 			util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n", name);
 			continue;
 		}
+
 		if (rrp->rr_type == DNS_RR_TYPE_TXT) {
 			txt = rrp->rr.rr_txt.txt_data;		// will check for iTunes
 			continue;
 		}
-		if (rrp->rr_type == DNS_RR_TYPE_AAAA) {
-			util_append(answer, sizeof(answer), "      \"aaaa\": \"%s\",\n", rrp->rr.rr_aaaa.aaaa_addr_str);
-			if (ipv6 == NULL) {
-				ipv6 = rrp->rr.rr_a.a_addr_str;
-			}
-			continue;
-		}
+
+		//
+		// Ignore IPv6 address for now
+		//
+		//if (rrp->rr_type == DNS_RR_TYPE_AAAA) {
+		//	util_append(answer, sizeof(answer), "      \"aaaa\": \"%s\",\n", rrp->rr.rr_aaaa.aaaa_addr_str);
+		//	if (ipv6 == NULL) {
+		//		ipv6 = rrp->rr.rr_a.a_addr_str;
+		//	}
+		//	continue;
+		//}
+
 		if (rrp->rr_type == DNS_RR_TYPE_SRV) {
 			port = rrp->rr.rr_srv.srv_port;
 			util_append(answer, sizeof(answer), "      \"target\": \"%s\",\n", rrp->rr.rr_srv.srv_target);
