@@ -4,6 +4,11 @@
     "description": "Name of the extension."
   },
 
+  "extensionAbbrev": {
+    "message": "Railduino",
+    "description": "Short name of the extension."
+  },
+
   "extensionDescription": {
     "message": "Find HTTP Servers in the .local domain using Zeroconf",
     "description": "Description of the extension."
@@ -27,6 +32,11 @@
   "htmlError": {
     "message": "Sorry, that did not work",
     "description": "The popup returned an error"
+  },
+
+  "htmlNoServer": {
+    "message": "Could not find any server",
+    "description": "The server list was empty"
   },
 
   "htmlCancel": {

@@ -29,6 +29,11 @@
     "description": "The popup returned an error"
   },
 
+  "htmlNoServer": {
+    "message": "Could not find any server",
+    "description": "The server list was empty"
+  },
+
   "htmlCancel": {
     "message": "Cancel (or press Esc)",
     "description": "Popup window Cancel link"
