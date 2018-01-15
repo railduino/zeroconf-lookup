@@ -61,13 +61,13 @@ chatty: zeroconf_lookup
 	./zeroconf_lookup -jvvvvvv
 
 local: zeroconf_lookup
-	./install-manifest.sh local
+	./linux-manifest.sh local
 
 system: zeroconf_lookup
-	sudo ./install-manifest.sh system
+	sudo ./linux-manifest.sh system
 
 uninstall:
-	./install-manifest.sh purge
+	./linux-manifest.sh purge
 
 log: zeroconf_lookup
 	tail -f /tmp/zeroconf_lookup.log
