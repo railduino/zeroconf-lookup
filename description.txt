@@ -1,0 +1,11 @@
+Railduino Zeroconf-Lookup is a browser extension for finding
+local web servers using the mDNS-SD protocol. The acronym
+mDNS-SD stands for "Multicast Domain Name System - Service
+Discovery" and provides a mechanism whereby web servers
+announce their IP address and port. The technology is called
+Zeroconf or Bonjour in the Apple universe. For security
+reasons browsers do not use Zeroconf anymore. The extension
+requires a companion program called a "Native Messaging Host"
+which needs to be installed separately. It can be found under
+the https://github.com/railduino/zeroconf-lookup URL.
+

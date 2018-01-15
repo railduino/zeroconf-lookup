@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+
+  "name": "Railduino Zeroconf-Lookup",
+  "short_name": "Railduino",
+  "description": "Find HTTP Servers in the .local domain using Zeroconf",
+  "version": "1.0.2",
+  "author": "Volker Wiegand",
+  "homepage_url": "https://github.com/railduino/zeroconf-lookup",
+
+  "browser_action": {
+    "default_icon": "icons/railduino-128.png",
+    "default_popup": "popup/lookup.html"
+  },
+
+  "icons": {
+    "16": "icons/railduino-16.png",
+    "32": "icons/railduino-32.png",
+    "48": "icons/railduino-48.png",
+    "96": "icons/railduino-96.png",
+    "128": "icons/railduino-128.png"
+  },
+
+  "permissions": [
+    "nativeMessaging",
+    "tabs",
+    "http://*/*",
+    "https://*/*"
+  ],
+
+  "default_locale": "en"
+}

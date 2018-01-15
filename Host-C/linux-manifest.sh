@@ -27,7 +27,7 @@ set -e
 
 _inform="Find HTTP Servers in the .local domain using Zeroconf"
 _binary="zeroconf_lookup"
-_extens="__WAITING_FOR_GOOGLE_APPROVAL___"
+_extens="eajgigammocepkmcgfcicpeljokgcchh"
 _jsonid="com.railduino.zeroconf_lookup"
 
 _camel="NativeMessagingHosts"
