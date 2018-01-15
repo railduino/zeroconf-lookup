@@ -1,7 +1,7 @@
 #
 # Written by Volker Wiegand <volker@railduino.de>
 #
-# License: See https://github.com/volkerwiegand/zeroconf-lookup/blob/master/LICENSE
+# See https://github.com/railduino/zeroconf-lookup
 #
 
 all: README.md
