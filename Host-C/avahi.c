@@ -73,7 +73,7 @@ avahi_cleanup(void)
 
 static void
 avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex interface,
-		AVAHI_GCC_UNUSED AvahiProtocol protocol, AvahiResolverEvent event,
+		AvahiProtocol protocol, AvahiResolverEvent event,
 		const char *name, AVAHI_GCC_UNUSED const char *type,
 		AVAHI_GCC_UNUSED const char *domain, const char *host_name,
 		const AvahiAddress *address, uint16_t port, AvahiStringList *txt,
@@ -93,6 +93,12 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 		return;
 	}
 	util_debug(3, "avahi_resolve_callback() event: AVAHI_RESOLVER_FOUND %s", host_name);
+
+	if (protocol == AVAHI_PROTO_INET6) {
+		util_debug(3, "avahi_resolve_callback() ignore IPv6");
+		avahi_service_resolver_free(r);
+		return;
+	}
 
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
 	if (port == 3689) {
