@@ -2,16 +2,17 @@
  *
  * Written by Volker Wiegand <volker@railduino.de>
  *
- * License: See https://github.com/volkerwiegand/zeroconf-lookup/blob/master/LICENSE
+ * See https://github.com/railduino/zeroconf-lookup
  */
 
 html, body {
   font-family: arial,helvetica,sans-serif;
+  min-width: 15em;
+  font-size: 1em;
 }
 
 .button.server, span {
   padding: 0 2em;
-  font-size: 1.2em;
 }
 
 .button a, #message {
