@@ -1,6 +1,8 @@
 //
 // Written by Volker Wiegand <volker@railduino.de>
 //
+// See https://github.com/railduino/zeroconf-lookup
+//
 
 function onError(error) {
   var err_msg = `${error}`;
@@ -19,27 +21,35 @@ cancel.textContent = chrome.i18n.getMessage("htmlCancel");
 cancel.onclick = function() { window.close(); };
 
 document.addEventListener('DOMContentLoaded', function () {
-  chrome.runtime.sendNativeMessage('com.railduino.zeroconf_lookup', { text: "Lookup" }, function(response) {
+  chrome.runtime.sendNativeMessage('com.railduino.zeroconf_lookup', { cmd: "Lookup" }, function(response) {
     var str = JSON.stringify(response, null, 2);
+    var i, server, a, div, hr, br, span;
 
     var server_list = document.getElementById("server_list");
     server_list.textContent = "";
 
-    var i, server, a, hr, br, span;
-    for (i in response.result) {
-      server = response.result[i];
-      a = document.createElement('a');
-      a.textContent = server.name;
-      a.href = server.url;
-      a.classList.add("server", "button");
-      server_list.appendChild(a);
-      if (server.txt !== "") {
-        br = document.createElement('br');
-        server_list.appendChild(br);
-        span = document.createElement('span');
-        span.textContent = server.txt;
-        server_list.appendChild(span);
+    if (response.result.length > 0) {
+      for (i in response.result) {
+        server = response.result[i];
+        a = document.createElement('a');
+        a.textContent = server.name;
+        a.href = server.url;
+        a.classList.add("server", "button");
+        server_list.appendChild(a);
+        if (server.txt !== "") {
+          br = document.createElement('br');
+          server_list.appendChild(br);
+          span = document.createElement('span');
+          span.textContent = server.txt;
+          server_list.appendChild(span);
+        }
+        hr = document.createElement('hr');
+        server_list.appendChild(hr);
       }
+    } else {
+      div = document.createElement('div');
+      div.textContent = chrome.i18n.getMessage("htmlNoServer");;
+      server_list.appendChild(div);
       hr = document.createElement('hr');
       server_list.appendChild(hr);
     }
