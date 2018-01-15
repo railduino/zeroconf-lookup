@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
 
-  "name": "Railduino Zeroconf-Lookup",
-  "short_name": "Railduino",
-  "description": "Find HTTP Servers in the .local domain using Zeroconf",
+  "name": "__MSG_extensionName__",
+  "short_name": "__MSG_extensionAbbrev__",
+  "description": "__MSG_extensionDescription__",
   "version": "1.0.2",
   "author": "Volker Wiegand",
   "homepage_url": "https://github.com/railduino/zeroconf-lookup",
@@ -22,10 +22,7 @@
   },
 
   "permissions": [
-    "nativeMessaging",
-    "tabs",
-    "http://*/*",
-    "https://*/*"
+    "nativeMessaging"
   ],
 
   "default_locale": "en"
