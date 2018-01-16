@@ -241,21 +241,21 @@ main(int argc, char *argv[])
 	util_debug(1, "ready for scanning");
 
 #if defined(HAVE_AVAHI)
-	if (options_get_number("Avahi", 1) == 1) {
+	if (options_get_number("Avahi", 1, 0, 1) == 1) {
 		send_result("Avahi", json, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
 #if defined(HAVE_DNSSD)
-	if (options_get_number("mDNSResponder", 1) == 1) {
+	if (options_get_number("mDNSResponder", 1, 0, 1) == 1) {
 		send_result("mDNSResponder", json, dnssd_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
 #if defined(HAVE_QUERY)
-	if (options_get_number("mDNS-SD Query", 1) == 1) {
+	if (options_get_number("mDNS-SD Query", 1, 0, 1) == 1) {
 		send_result("mDNS-SD Query", json, query_browse());
 		exit(EXIT_SUCCESS);
 	}

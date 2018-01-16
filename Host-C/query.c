@@ -28,6 +28,7 @@
 
 #if defined(HAVE_QUERY)
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -43,8 +44,8 @@
 #define MDNS_PORT	5353
 
 
-static int      my_sock     = 0;
 static result_t *my_results = NULL;
+static int      my_sock     = 0;
 
 
 static void
@@ -183,18 +184,46 @@ query_read_answer(void)
 }
 
 
-static void
-query_write_query(void)
+result_t *
+query_browse(void)
 {
-	char data[MDNS_SIZE];
-	size_t len;
 	struct sockaddr_in addr;
 	socklen_t addrlen;
+	struct ip_mreq mreq;
+	int one = 1, timeout, ret;
+	struct pollfd fds[1];
+	char data[MDNS_SIZE];
+	size_t len;
+
+	atexit(query_cleanup);
+	timeout = options_get_number("Timeout", 3, 1, 9) * 1000;
+	util_info("using mDNS-SD query for discovery (%d ms)", timeout);
+
+	if ((my_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		util_fatal("socket: %s", strerror(errno));
+	}
+	if (setsockopt(my_sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
+		util_fatal("setsockopt(SO_REUSEADDR): %s", strerror(errno));
+	}
+
+	addr.sin_family      = AF_INET;
+	addr.sin_port        = htons(MDNS_PORT);
+	addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
+	addrlen = sizeof(addr);
+	if (bind(my_sock, (struct sockaddr *) &addr, addrlen) < 0) {
+		util_fatal("bind: %s", strerror(errno));
+	}
+
+	mreq.imr_multiaddr.s_addr = inet_addr(INADDR_MDNS);
+	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+	if (setsockopt(my_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+		util_fatal("setsockopt(IP_ADD_MEMBERSHIP): %s", strerror(errno));
+	} 
 
 	len = parser_create_query(data, sizeof(data), QUERY_NAME, DNS_RR_TYPE_PTR);
 	if (len == 0) {
 		util_error("%s", parser_get_error());
-		return;
+		return NULL;
 	}
 	util_info("sending mDNS-SD question");
 
@@ -202,121 +231,23 @@ query_write_query(void)
 	addr.sin_port        = htons(MDNS_PORT);
 	addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
 	addrlen = sizeof(addr);
-
 	sendto(my_sock, data, len, 0, (struct sockaddr *) &addr, addrlen);
 
-	my_results = NULL;
-}
-
-
-static void
-query_exception(void)
-{
-	util_error("query exception ???");
-}
-
-
-static void
-query_select(fd_set *rfds, fd_set *wfds, fd_set *xfds)
-{
-	if (FD_ISSET(my_sock, rfds)) {
-		query_read_answer();
-	}
-
-	if (FD_ISSET(my_sock, wfds)) {
-		query_write_query();
-	}
-
-	if (FD_ISSET(my_sock, xfds)) {
-		query_exception();
-	}
-}
-
-
-static void
-query_prepare(int query, int *hfd, fd_set *rfds, fd_set *wfds, fd_set *xfds)
-{
-	struct sockaddr_in addr;
-	socklen_t addrlen;
-	struct ip_mreq mreq;
-	int one = 1;
-
-	if (my_sock <= 0) {
-		if ((my_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-			util_fatal("socket: %s", strerror(errno));
+	for (;;) {
+		fds[0].fd = my_sock;
+		fds[0].events = POLLIN;
+		if ((ret = poll(fds, 1, timeout)) == -1) {
+			util_error("can't poll mDNS-Sock (%s)", strerror(errno));
+			break;
 		}
-
-		if (setsockopt(my_sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
-			util_fatal("setsockopt(SO_REUSEADDR): %s", strerror(errno));
-		}
-
-		addr.sin_family      = AF_INET;
-		addr.sin_port        = htons(MDNS_PORT);
-		addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
-		addrlen = sizeof(addr);
-		if (bind(my_sock, (struct sockaddr *) &addr, addrlen) < 0) {
-			util_fatal("bind: %s", strerror(errno));
-		}
-
-		mreq.imr_multiaddr.s_addr = inet_addr(INADDR_MDNS);
-		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-		if (setsockopt(my_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-			util_fatal("setsockopt(IP_ADD_MEMBERSHIP): %s", strerror(errno));
-		} 
-	}
-
-	FD_SET(my_sock, rfds);
-	if (query == 1) {
-		FD_SET(my_sock, wfds);
-	}
-	FD_SET(my_sock, xfds);
-	if (my_sock > *hfd) {
-		*hfd = my_sock;
-	}
-}
-
-
-result_t *
-query_browse(void)
-{
-	struct timeval timer;
-	fd_set rfds, wfds, xfds;
-	int query, hfd, res;
-	time_t time_up;
-
-	my_sock = 0;
-	my_results = NULL;
-	atexit(query_cleanup);
-
-	util_info("using mDNS-SD query for discovery");
-	time_up = time(NULL) + options_get_number("Timeout", 3);;
-
-	// TODO replace select with poll
-
-	for (query = 1; ; ) {
-		if (time(NULL) >= time_up) {
+		if (ret == 0) {
+			util_info("timeout on mDNS-Sock");
 			break;
 		}
 
-		timer.tv_sec  = 1;
-		timer.tv_usec = 0;
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		FD_ZERO(&xfds);
-
-		hfd = 0;
-		query_prepare(query, &hfd, &rfds, &wfds, &xfds);
-
-		if ((res = select(hfd + 1, &rfds, &wfds, &xfds, &timer)) == -1) {
-			util_fatal("can't select-query (%s)", strerror(errno));
+		if (fds[0].revents & POLLIN) {
+			query_read_answer();
 		}
-		if (res == 0) {
-			util_debug(2, "query: tick...");
-			continue;
-		}
-		query = 0;
-
-		query_select(&rfds, &wfds, &xfds);
 	}
 
 	return my_results;

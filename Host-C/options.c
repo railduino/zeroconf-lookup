@@ -46,25 +46,36 @@ options_get_string(char *name, char *dflt)
 
 	for (option = my_options; option != NULL; option = option->next) {
 		if (strcasecmp(name, option->name) == 0) {
-			util_debug(1, "++ found '%s'", option->text);
+			util_debug(1, "(found): '%s'", option->text);
 			return option->text;
 		}
 	}
 
-	util_debug(1, "++ default '%s'", dflt);
+	util_debug(1, "(default): '%s'", dflt);
 	return dflt;
 }
 
 
 int
-options_get_number(char *name, int dflt)
+options_get_number(char *name, int dflt, int min, int max)
 {
 	char temp[32], *ptr;
+	int val;
 
 	snprintf(temp, sizeof(temp), "%d", dflt);
 	ptr = options_get_string(name, temp);
 
-	return (*ptr == '1' || *ptr == 'Y' || *ptr == 'y') ? 1 : 0;
+	if ((val = atoi(ptr)) < min) {
+		util_debug(1, "(using min): %d", min);
+		return min;
+	}
+	if (val > max) {
+		util_debug(1, "(using max): %d", max);
+		return max;
+	}
+
+	util_debug(1, "(using val): %d", val);
+	return val;
 }
 
 

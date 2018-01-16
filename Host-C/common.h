@@ -99,7 +99,7 @@ result_t *empty_browse(void);
 // Prototypes for options.c
 
 char *options_get_string(char *name, char *dflt);
-int options_get_number(char *name, int dflt);
+int options_get_number(char *name, int dflt, int min, int max);
 void options_init(char *argv0);
 
 
