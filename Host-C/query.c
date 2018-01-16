@@ -193,7 +193,7 @@ query_browse(void)
 	int one = 1, timeout, ret;
 	struct pollfd fds[1];
 	char data[MDNS_SIZE];
-	size_t len;
+	ssize_t len, cnt;
 
 	atexit(query_cleanup);
 	timeout = options_get_number("Timeout", 3, 1, 9) * 1000;
@@ -220,10 +220,9 @@ query_browse(void)
 		util_fatal("setsockopt(IP_ADD_MEMBERSHIP): %s", strerror(errno));
 	} 
 
-	len = parser_create_query(data, sizeof(data), QUERY_NAME, DNS_RR_TYPE_PTR);
+	len = (ssize_t) parser_create_query(data, sizeof(data), QUERY_NAME, DNS_RR_TYPE_PTR);
 	if (len == 0) {
-		util_error("%s", parser_get_error());
-		return NULL;
+		util_fatal("%s", parser_get_error());
 	}
 	util_info("sending mDNS-SD question");
 
@@ -231,7 +230,10 @@ query_browse(void)
 	addr.sin_port        = htons(MDNS_PORT);
 	addr.sin_addr.s_addr = inet_addr(INADDR_MDNS);
 	addrlen = sizeof(addr);
-	sendto(my_sock, data, len, 0, (struct sockaddr *) &addr, addrlen);
+	cnt = sendto(my_sock, data, len, 0, (struct sockaddr *) &addr, addrlen);
+	if (cnt != len) {
+		util_fatal("can't send query (%s)", strerror(errno));
+	}
 
 	for (;;) {
 		fds[0].fd = my_sock;
