@@ -4,15 +4,6 @@
 // See https://github.com/railduino/zeroconf-lookup
 //
 
-function onError(error) {
-  var err_msg = `${error}`;
-
-  document.getElementById("waiting").textContent = chrome.i18n.getMessage("htmlError");
-  document.getElementById("message").textContent = err_msg;
-  document.getElementById("spinner").style.display = "none";
-  console.log(err_msg);
-}
-
 document.getElementById("header").textContent = chrome.i18n.getMessage("htmlHeader");
 document.getElementById("waiting").textContent = chrome.i18n.getMessage("htmlWaiting");
 
@@ -22,9 +13,14 @@ cancel.onclick = function() { window.close(); };
 
 document.addEventListener('DOMContentLoaded', function () {
   chrome.runtime.sendNativeMessage('com.railduino.zeroconf_lookup', { cmd: "Lookup" }, function(response) {
+    if (typeof response !== 'object') {
+      document.getElementById("waiting").textContent = chrome.i18n.getMessage("htmlError");
+      document.getElementById("message").textContent = chrome.i18n.getMessage("htmlNoServer");
+      document.getElementById("spinner").style.display = "none";
+    }
+
     var str = JSON.stringify(response, null, 2);
     var i, server, a, div, hr, br, span;
-
     var server_list = document.getElementById("server_list");
     server_list.textContent = "";
 
@@ -48,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     } else {
       div = document.createElement('div');
-      div.textContent = chrome.i18n.getMessage("htmlNoServer");;
+      div.textContent = chrome.i18n.getMessage("htmlNoServer");
       server_list.appendChild(div);
       hr = document.createElement('hr');
       server_list.appendChild(hr);
