@@ -117,6 +117,8 @@ func main() {
 	timeout = viper.GetInt("timeout")
 
 	if *verbose {
+		fmt.Printf("Logfile is: %s\n", logfile)
+
 		log.Printf("VERSION .........: %s", VERSION)
 		log.Printf("readable ........: %v", *readable)
 		log.Printf("verbose .........: %v", *verbose)

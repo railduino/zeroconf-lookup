@@ -25,9 +25,11 @@
 all: zeroconf_lookup
 
 zeroconf_lookup: main.go
+	go build -o $@
+
+update:
 	go get -u github.com/spf13/viper
 	go get -u github.com/grandcat/zeroconf
-	go build -o $@
 
 clean:
 	rm -f zeroconf_lookup
