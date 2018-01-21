@@ -29,10 +29,15 @@
 
 #if defined(HAVE_GETOPT_LONG)
 static struct option long_options[] = {
-	{ "help",    no_argument,       NULL, 'h' },
-	{ "json",    no_argument,       NULL, 'j' },
-	{ "log",     required_argument, NULL, 'l' },
-	{ "verbose", no_argument,       NULL, 'v' },
+	{ "chrome",    required_argument, NULL, 'c' },
+	{ "help",      no_argument,       NULL, 'h' },
+	{ "install",   no_argument,       NULL, 'i' },
+	{ "log",       required_argument, NULL, 'l' },
+	{ "mozilla",   required_argument, NULL, 'm' },
+	{ "readable",  no_argument,       NULL, 'r' },
+	{ "timeout",   required_argument, NULL, 't' },
+	{ "uninstall", no_argument,       NULL, 'u' },
+	{ "verbose",   no_argument,       NULL, 'v' },
 	{ NULL, 0, NULL, 0 }
 };
 #endif
@@ -50,11 +55,19 @@ usage(char *name, int retval)
 
 	fprintf(fp, "Railduino zeroconf_lookup Version %s\n", VERSION);
 	fprintf(fp, "Usage: %s [options ...]\n", name);
-	fprintf(fp, "      -h|--help         Display usage and exit\n");
-	fprintf(fp, "      -j|--json         Use human readable length\n");
-	fprintf(fp, "      -l|--log=<file>   Change logfile (default %s)\n", DEFAULT_LOGFILE);
-	fprintf(fp, "                        Recognizes 'none' for silence or 'stderr'\n");
-	fprintf(fp, "      -v|--verbose      Increase verbosity level\n");
+	fprintf(fp, "      -c|--chrome=<str>    Install Chrome allowed_origins (with -i)\n");
+	fprintf(fp, "                           Default: %s\n", CHROME_TAG);
+	fprintf(fp, "      -h|--help            Display usage and exit\n");
+	fprintf(fp, "      -i|--install         Install Mozilla/Chrome manifests (sudo for system wide)\n");
+	fprintf(fp, "      -l|--log=<file>      Change logfile (default %s)\n", DEFAULT_LOGFILE);
+	fprintf(fp, "                           Recognizes 'none' for silence or 'stderr'\n");
+	fprintf(fp, "      -m|--mozilla=<str>   Install Mozilla allowed_extensions (with -i)\n");
+	fprintf(fp, "                           Default: %s\n", MOZILLA_TAG);
+	fprintf(fp, "      -r|--readable        Use human readable length\n");
+	fprintf(fp, "      -t|--timeout=<num>   Install server collect timeout (with -i)\n");
+	fprintf(fp, "                           Default: %d, Range: 1 to 9\n", TIME_OUT);
+	fprintf(fp, "      -u|--uninstall       Uninstall Mozilla/Chrome manifests (sudo for system wide)\n");
+	fprintf(fp, "      -v|--verbose         Increase verbosity level\n");
 
 	exit(retval);
 }
@@ -159,7 +172,7 @@ receive_input(void)
 
 
 static void
-send_result(char *source, int json, result_t *result)
+send_result(char *source, int readable, result_t *result)
 {
 	char prolog[1024], *epilog;
 	length_t length;
@@ -180,7 +193,7 @@ send_result(char *source, int json, result_t *result)
 	epilog = "  ]\n}\n";
 	length.as_uint += strlen(epilog);
 
-	if (json == 0) {
+	if (readable == 0) {
 		write(fileno(stdout), length.as_char, 4);
 	} else {
 		printf("==> %u bytes <==\n", length.as_uint);
@@ -200,28 +213,43 @@ send_result(char *source, int json, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, ofs, json;
+	int c, ofs, readable, instmode;
 	char *logfile = DEFAULT_LOGFILE;
 
-	for (ofs = json = 0; ; ) {
+	for (ofs = readable = instmode = 0; ; ) {
 #if defined(HAVE_GETOPT_LONG)
-		c = getopt_long(argc, argv, "h?jl:v", long_options, &ofs);
+		c = getopt_long(argc, argv, "c:h?il:m:rt:uv", long_options, &ofs);
 #else
-		c = getopt(argc, argv, "h?jl:v");
+		c = getopt(argc, argv, "c:h?il:m:rt:uv");
 #endif
 		if (c < 0) {
 			break;
 		}
 		switch (c) {
+			case 'c':
+				install_set_chrome(optarg);
+				break;
 			case 'h':
 			case '?':
 				usage(argv[0], EXIT_SUCCESS);
 				break;
-			case 'j':
-				json = 1;
+			case 'i':
+				instmode = 'i';
 				break;
 			case 'l':
 				logfile = optarg;
+				break;
+			case 'm':
+				install_set_mozilla(optarg);
+				break;
+			case 'r':
+				readable = 1;
+				break;
+			case 't':
+				install_set_timeout(optarg);
+				break;
+			case 'u':
+				instmode = 'u';
 				break;
 			case 'v':
 				util_inc_verbose();
@@ -232,36 +260,47 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (instmode == 'i') {
+		util_open_logfile("stderr");
+		install_install(argv[0]);
+		exit(EXIT_SUCCESS);
+	}
+	if (instmode == 'u') {
+		util_open_logfile("stderr");
+		install_uninstall();
+		exit(EXIT_SUCCESS);
+	}
+
 	options_init(argv[0]);
 	util_open_logfile(logfile);
 
-	if (json == 0) {
+	if (readable == 0) {
 		receive_input();
 	}
 	util_debug(1, "ready for scanning");
 
 #if defined(HAVE_AVAHI)
 	if (options_get_number("Avahi", 1, 0, 1) == 1) {
-		send_result("Avahi", json, avahi_browse());
+		send_result("Avahi", readable, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
 #if defined(HAVE_DNSSD)
 	if (options_get_number("mDNSResponder", 1, 0, 1) == 1) {
-		send_result("mDNSResponder", json, dnssd_browse());
+		send_result("mDNSResponder", readable, dnssd_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
 #if defined(HAVE_QUERY)
 	if (options_get_number("mDNS-SD Query", 1, 0, 1) == 1) {
-		send_result("mDNS-SD Query", json, query_browse());
+		send_result("mDNS-SD Query", readable, query_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
-	send_result("Blank", json, empty_browse());
+	send_result("Blank", readable, empty_browse());
 	exit(EXIT_SUCCESS);
 }
 

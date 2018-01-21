@@ -177,10 +177,9 @@ util_get_verbose(void)
 static void
 util_close_logfile(void)
 {
-	util_info("touch-down");
-
 	if (my_logfile != NULL) {
 		if (my_logfile != stderr) {
+			util_info("touch-down");
 			fclose(my_logfile);
 		}
 		my_logfile = NULL;
@@ -198,11 +197,12 @@ util_open_logfile(char *logfile)
 
 	if (strcmp("stderr", logfile) == 0) {
 		my_logfile = stderr;
-	} else if ((my_logfile = fopen(logfile, "w")) == NULL) {
-		util_fatal("can't create logfile %s: %s", logfile, strerror(errno));
+	} else {
+		if ((my_logfile = fopen(logfile, "w")) == NULL) {
+			util_fatal("can't create logfile %s: %s", logfile, strerror(errno));
+		}
+		util_info("take-off logging=%d", my_verbose);
 	}
-
-	util_info("take-off logging=%d", my_verbose);
 }
 
 

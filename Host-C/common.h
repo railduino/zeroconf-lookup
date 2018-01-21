@@ -25,6 +25,12 @@
  ****************************************************************************/
 
 #define VERSION		"1.0.3"
+#define HOST_NAME	"com.railduino.zeroconf_lookup"
+#define DESCRIPTION	"Find HTTP Servers in the .local domain using Zeroconf"
+#define CHROME_TAG	"eajgigammocepkmcgfcicpeljokgcchh"
+#define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
+#define TIME_OUT	2
+
 
 #if defined(__STDC__)
 #  include <stdio.h>
@@ -37,6 +43,9 @@
 
 #if defined(__linux__) || defined(__APPLE__)
 #  include <unistd.h>
+#  include <fcntl.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
 #  include <stdint.h>
 #  define HAVE_POLL 1
 #  include <poll.h>
@@ -101,6 +110,16 @@ result_t *empty_browse(void);
 char *options_get_string(char *name, char *dflt);
 int options_get_number(char *name, int dflt, int min, int max);
 void options_init(char *argv0);
+
+
+// Prototypes for install.c
+
+void install_set_chrome(char *str);
+void install_set_mozilla(char *str);
+void install_set_timeout(char *str);
+
+void install_install(char *prog);
+void install_uninstall(void);
 
 
 // Prototypes for util.c

@@ -52,22 +52,30 @@ tags:
 	ctags *.[ch]
 
 run: zeroconf_lookup
-	./zeroconf_lookup -j
+	./zeroconf_lookup -r
 
 debug: zeroconf_lookup
-	./zeroconf_lookup -jv
+	./zeroconf_lookup -rv
 
 chatty: zeroconf_lookup
-	./zeroconf_lookup -jvvvvvv
+	./zeroconf_lookup -rvvvvvv
 
-local: zeroconf_lookup
-	./linux-manifest.sh local
+install: zeroconf_lookup
+	install zeroconf_lookup /usr/bin
+	/usr/bin/zeroconf_lookup -i
 
-system: zeroconf_lookup
-	sudo ./linux-manifest.sh system
+user-install: zeroconf_lookup
+	mkdir -p $(HOME)/bin
+	install zeroconf_lookup $(HOME)/bin
+	$(HOME)/bin/zeroconf_lookup -i
 
-uninstall:
-	./linux-manifest.sh purge
+uninstall: zeroconf_lookup
+	./zeroconf_lookup -u
+	rm -f /usr/bin/zeroconf_lookup
+
+user-uninstall: zeroconf_lookup
+	./zeroconf_lookup -u
+	rm -f $(HOME)/bin/zeroconf_lookup
 
 log: zeroconf_lookup
 	tail -f /tmp/zeroconf_lookup.log
