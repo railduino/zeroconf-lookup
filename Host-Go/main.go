@@ -67,12 +67,12 @@ var (
 	srvList   = []Server{}
 	timeout   = TIMEOUT
 	verbose   = flag.Bool("v",   false,   "Output diagnostic messages")
-	readable  = flag.Bool("h",   false,   "Use human readable i/o size")
+	readable  = flag.Bool("r",   false,   "Use human readable i/o size")
 	install   = flag.Bool("i",   false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
 	uninstall = flag.Bool("u",   false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
 	settime   = flag.Int("t",    TIMEOUT, "Setup server collect timeout (with -i)")
-	extension = flag.String("e", "zeroconf_lookup@railduino.com",    "Setup Mozilla allowed_extensions (with -i)")
-	origin    = flag.String("o", "eajgigammocepkmcgfcicpeljokgcchh", "Setup Chrome allowed_origins (with -i)")
+	extension = flag.String("m", "zeroconf_lookup@railduino.com",    "Setup Mozilla allowed_extensions (with -i)")
+	origin    = flag.String("c", "eajgigammocepkmcgfcicpeljokgcchh", "Setup Chrome allowed_origins (with -i)")
 	homedir   = os.Getenv("HOME")
 )
 
