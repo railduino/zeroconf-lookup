@@ -30,6 +30,10 @@ else
   ifeq ($(UNAME_S),Linux)
     CFLAGS  += $(shell pkg-config --cflags avahi-client)
     LDFLAGS += $(shell pkg-config --libs   avahi-client)
+    BINDIR = /usr/bin
+  endif
+  ifeq ($(UNAME_S),Darwin)
+    BINDIR = /usr/local/bin
   endif
 endif
 
@@ -55,14 +59,17 @@ run: zeroconf_lookup
 	./zeroconf_lookup -r
 
 debug: zeroconf_lookup
-	./zeroconf_lookup -rv
+	rm -f /tmp/zeroconf_lookup.log
+	-./zeroconf_lookup -r -v
+	cat /tmp/zeroconf_lookup.log
 
 chatty: zeroconf_lookup
-	./zeroconf_lookup -rvvvvvv
+	./zeroconf_lookup -r -v -v -v -v -v -v
 
 install: zeroconf_lookup
-	install zeroconf_lookup /usr/bin
-	/usr/bin/zeroconf_lookup -i
+	mkdir -p $(BINDIR)
+	install zeroconf_lookup $(BINDIR)
+	$(BINDIR)/zeroconf_lookup -i
 
 user-install: zeroconf_lookup
 	mkdir -p $(HOME)/bin
@@ -71,7 +78,7 @@ user-install: zeroconf_lookup
 
 uninstall: zeroconf_lookup
 	./zeroconf_lookup -u
-	rm -f /usr/bin/zeroconf_lookup
+	rm -f $(BINDIR)/zeroconf_lookup
 
 user-uninstall: zeroconf_lookup
 	./zeroconf_lookup -u
