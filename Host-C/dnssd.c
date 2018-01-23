@@ -97,7 +97,7 @@ dnssd_cleanup(void)
 }
 
 
-/* static */ void DNSSD_API
+static void DNSSD_API
 dnssd_zonedata_resolve(DNSServiceRef  sdref,
 		const DNSServiceFlags flags,
 		uint32_t              ifIndex,
