@@ -60,7 +60,7 @@ util_realloc(void *ptr, size_t size, size_t prev)
 
 
 char *
-util_strdup(char *str)
+util_strdup(const char *str)
 {
 	char *ptr;
 	size_t len;
@@ -87,7 +87,7 @@ util_free(void *ptr)
 
 
 char *
-util_strcpy(char *dst, char *src, size_t len)
+util_strcpy(char *dst, const char *src, size_t len)
 {
 	if (dst == NULL || src == NULL) {
 		return NULL;
@@ -101,7 +101,7 @@ util_strcpy(char *dst, char *src, size_t len)
 
 
 char *
-util_strcat(char *dst, char *src, size_t len)
+util_strcat(char *dst, const char *src, size_t len)
 {
 	size_t siz;
 
@@ -119,7 +119,7 @@ util_strcat(char *dst, char *src, size_t len)
 
 
 char *
-util_strtrim(char *src, char *trim)
+util_strtrim(char *src, const char *trim)
 {
 	size_t siz;
 
@@ -223,6 +223,7 @@ util_write_logfile(int tag, char *line)
 		}
 
 		fprintf(my_logfile, "%.19s %s -- %s\n", ctime(&now), typ, line);
+		fflush(my_logfile);
 	}
 }
 

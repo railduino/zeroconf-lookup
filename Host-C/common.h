@@ -56,6 +56,7 @@
 #    define HAVE_AVAHI 1
 #  endif
 #  if defined(__APPLE__)
+#    include <mach-o/dyld.h>
 #    define HAVE_DNSSD 1
 #  endif
 #  define HAVE_QUERY 1
@@ -129,12 +130,12 @@ void install_uninstall(void);
 
 void *util_malloc(size_t size);
 void *util_realloc(void *ptr, size_t size, size_t prev);
-char *util_strdup(char *str);
+char *util_strdup(const char *str);
 void util_free(void *ptr);
 
-char *util_strcpy(char *dst, char *src, size_t len);
-char *util_strcat(char *dst, char *src, size_t len);
-char *util_strtrim(char *src, char *trim);
+char *util_strcpy(char *dst, const char *src, size_t len);
+char *util_strcat(char *dst, const char *src, size_t len);
+char *util_strtrim(char *src, const char *trim);
 char *util_append(char *dst, size_t len, char *fmt, ...);
 
 void util_inc_verbose(void);
