@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 	if (readable == 0) {
 		receive_input();
 	}
-	util_debug(1, "ready for scanning");
+	util_debug(1, "ready for browsing");
 
 #if defined(HAVE_AVAHI)
 	if (options_get_number("Avahi", 1, 0, 1) == 1) {
