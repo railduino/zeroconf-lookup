@@ -185,7 +185,27 @@ install_install(char *prog)
 		install_add_manifest("~/.config/chromium/NativeMessagingHosts");
 	}
 #elif defined(__APPLE__)
-	util_fatal("sorry -- not yet implemented");
+	uint32_t size = sizeof(my_executable);
+	char *ptr;
+	(void) prog;    // not necessary
+
+	if (_NSGetExecutablePath(my_executable, &size) != 0) {
+		util_fatal("can't access my own executable");
+	}
+	while ((ptr = strstr(my_executable, "/./")) != NULL) {
+		memmove(ptr, ptr + 2, strlen(ptr));
+	}
+	util_info("executable is located at %s", my_executable);
+
+	if (getuid() == 0) {
+		install_add_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts");
+		install_add_manifest("/Library/Google/Chrome/NativeMessagingHosts");
+		install_add_manifest("/Library/Application Support/Chromium/NativeMessagingHosts");
+	} else {
+		install_add_manifest("~/Library/Application Support/Mozilla/NativeMessagingHosts");
+		install_add_manifest("~/Library/Application Support/Google/Chrome/NativeMessagingHosts");
+		install_add_manifest("~/Library/Application Support/Chromium/NativeMessagingHosts");
+	}
 #else
 	util_fatal("sorry -- not yet implemented");
 #endif
@@ -230,7 +250,15 @@ install_uninstall(void)
 		install_del_manifest("~/.config/chromium/NativeMessagingHosts");
 	}
 #elif defined(__APPLE__)
-	util_fatal("sorry -- not yet implemented");
+	if (getuid() == 0) {
+		install_del_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts");
+		install_del_manifest("/Library/Google/Chrome/NativeMessagingHosts");
+		install_del_manifest("/Library/Application Support/Chromium/NativeMessagingHosts");
+	} else {
+		install_del_manifest("~/Library/Application Support/Mozilla/NativeMessagingHosts");
+		install_del_manifest("~/Library/Application Support/Google/Chrome/NativeMessagingHosts");
+		install_del_manifest("~/Library/Application Support/Chromium/NativeMessagingHosts");
+	}
 #else
 	util_fatal("sorry -- not yet implemented");
 #endif
