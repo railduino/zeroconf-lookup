@@ -26,6 +26,8 @@ import (
 const (
 	PROG_NAME = "zeroconf_lookup"
 	HOST_NAME = "com.railduino.zeroconf_lookup"
+	CHROME    = "anjclddigfkhclmgopnjmmpfllfbhfea"
+	MOZILLA   = "zeroconf_lookup@railduino.com"
 	VERSION   = "2.0.0"
 	TIMEOUT   = 2
 )
@@ -68,13 +70,13 @@ type ChromeManifest struct {
 var (
 	srvList   = []Server{}
 	timeout   = TIMEOUT
-	origin    = flag.String("c", "eajgigammocepkmcgfcicpeljokgcchh", "Setup Chrome allowed_origins (with -i)")
-	install   = flag.Bool("i",   false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
-	extension = flag.String("m", "zeroconf_lookup@railduino.com",    "Setup Mozilla allowed_extensions (with -i)")
-	readable  = flag.Bool("r",   false,   "Use human readable i/o size")
-	settime   = flag.Int("t",    TIMEOUT, "Setup server collect timeout (with -i)")
-	uninstall = flag.Bool("u",   false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
-	verbose   = flag.Bool("v",   false,   "Output diagnostic messages")
+	origin    = flag.String("c", CHROME,  "Setup Chrome allowed_origins (with -i)")
+	install   = flag.Bool(  "i", false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
+	extension = flag.String("m", MOZILLA, "Setup Mozilla allowed_extensions (with -i)")
+	readable  = flag.Bool(  "r", false,   "Use human readable i/o size")
+	settime   = flag.Int(   "t", TIMEOUT, "Setup server collect timeout (with -i)")
+	uninstall = flag.Bool(  "u", false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
+	verbose   = flag.Bool(  "v", false,   "Output diagnostic messages")
 	homedir   = os.Getenv("HOME")
 )
 
