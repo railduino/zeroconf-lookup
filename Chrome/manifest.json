@@ -1,17 +1,12 @@
 {
   "manifest_version": 2,
 
-  "name": "__MSG_extensionName__",
-  "short_name": "__MSG_extensionAbbrev__",
+  "name": "com.railduino.zeroconf_lookup",
   "description": "__MSG_extensionDescription__",
   "version": "2.0.0",
-  "author": "Volker Wiegand",
   "homepage_url": "https://github.com/railduino/zeroconf-lookup",
-
-  "browser_action": {
-    "default_icon": "icons/railduino-128.png",
-    "default_popup": "popup/lookup.html"
-  },
+  "author": "Volker Wiegand",
+  "short_name": "Railduino",
 
   "icons": {
     "16": "icons/railduino-16.png",
@@ -19,6 +14,11 @@
     "48": "icons/railduino-48.png",
     "96": "icons/railduino-96.png",
     "128": "icons/railduino-128.png"
+  },
+
+  "browser_action": {
+    "default_icon": "icons/railduino-128.png",
+    "default_popup": "popup/lookup.html"
   },
 
   "permissions": [

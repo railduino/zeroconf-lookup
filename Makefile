@@ -9,9 +9,10 @@ all: README.md
 README.md: README.odt
 	pandoc -f odt -t markdown -o $@ $<
 
-chrome:
-	cd Chrome && zip -r -FS ../railduino-zeroconf-lookup.zip *
-
 firefox:
 	cd Firefox && zip -r -FS ../railduino-zeroconf-lookup.xpi *
+
+uninstall-all:
+	cd Host-C  && make && make user-uninstall && sudo make uninstall && make clean
+	cd Host-Go && make && make user-uninstall && sudo make uninstall && make clean
 

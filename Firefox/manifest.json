@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
 
-  "name": "__MSG_extensionName__",
+  "name": "com.railduino.zeroconf_lookup",
   "description": "__MSG_extensionDescription__",
   "version": "2.0.0",
   "homepage_url": "https://github.com/railduino/zeroconf-lookup",
