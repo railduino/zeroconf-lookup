@@ -1,14 +1,4 @@
 {
-  "extensionName": {
-    "message": "Railduino Zeroconf Lookup",
-    "description": "Name of the extension."
-  },
-
-  "extensionAbbrev": {
-    "message": "Railduino",
-    "description": "Short name of the extension."
-  },
-
   "extensionDescription": {
     "message": "Finde HTTP Server im lokalen Netzwerk mit Zeroconf",
     "description": "Description of the extension."
@@ -22,6 +12,11 @@
   "htmlHeader": {
     "message": "Lokale HTTP Server",
     "description": "Popup window <h3> header"
+  },
+
+  "htmlSource": {
+    "message": "Quelle: ",
+    "description": "Inform about data source."
   },
 
   "htmlWaiting": {

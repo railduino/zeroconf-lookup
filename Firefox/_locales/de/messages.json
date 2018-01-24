@@ -1,9 +1,4 @@
 {
-  "extensionName": {
-    "message": "Railduino Zeroconf Lookup",
-    "description": "Name of the extension."
-  },
-
   "extensionDescription": {
     "message": "Finde HTTP Server im lokalen Netzwerk mit Zeroconf",
     "description": "Description of the extension."
