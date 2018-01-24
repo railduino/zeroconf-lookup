@@ -40,6 +40,8 @@ endif
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
 
+all: zeroconf_lookup
+
 zeroconf_lookup: $(OBJS)
 	ctags *.[ch]
 	gcc -o $@ $^ $(LDFLAGS)
@@ -63,7 +65,7 @@ debug: zeroconf_lookup
 	-./zeroconf_lookup -r -v
 	cat /tmp/zeroconf_lookup.log
 
-chatty: zeroconf_lookup
+deep: zeroconf_lookup
 	./zeroconf_lookup -r -v -v -v -v -v -v
 
 install: zeroconf_lookup

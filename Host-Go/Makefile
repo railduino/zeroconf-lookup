@@ -22,30 +22,60 @@
 # SOFTWARE.
 #
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+  BINDIR = /usr/bin
+endif
+ifeq ($(UNAME_S),Darwin)
+  BINDIR = /usr/local/bin
+endif
+
 all: zeroconf_lookup
 
 zeroconf_lookup: main.go
 	go build -o $@
+
+.PHONY: update clean tags uninstall
 
 update:
 	go get -u github.com/spf13/viper
 	go get -u github.com/grandcat/zeroconf
 
 clean:
-	rm -f zeroconf_lookup
+	rm -f zeroconf_lookup tags
+
+tags:
+	ctags *.[ch]
+
+run: zeroconf_lookup
+	./zeroconf_lookup -r
+
+debug: zeroconf_lookup
+	rm -f /tmp/zeroconf_lookup.log
+	-./zeroconf_lookup -r -v
+	cat /tmp/zeroconf_lookup.log
+
+deep: zeroconf_lookup
+	./zeroconf_lookup -r -v -v -v -v -v -v
 
 install: zeroconf_lookup
-	install zeroconf_lookup /usr/bin
-	/usr/bin/zeroconf_lookup -i
+	mkdir -p $(BINDIR)
+	install zeroconf_lookup $(BINDIR)
+	$(BINDIR)/zeroconf_lookup -i
 
-install-user: zeroconf_lookup
-	install -d ~/bin
-	install zeroconf_lookup ~/bin
-	~/bin/zeroconf_lookup -i
+user-install: zeroconf_lookup
+	mkdir -p $(HOME)/bin
+	install zeroconf_lookup $(HOME)/bin
+	$(HOME)/bin/zeroconf_lookup -i
 
-uninstall:
-	/usr/bin/zeroconf_lookup -u
+uninstall: zeroconf_lookup
+	./zeroconf_lookup -u
+	rm -f $(BINDIR)/zeroconf_lookup
 
-uninstall-user:
-	~/bin/zeroconf_lookup -u
+user-uninstall: zeroconf_lookup
+	./zeroconf_lookup -u
+	rm -f $(HOME)/bin/zeroconf_lookup
+
+log: zeroconf_lookup
+	tail -f /tmp/zeroconf_lookup.log
 
