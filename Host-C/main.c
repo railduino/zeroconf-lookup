@@ -287,15 +287,15 @@ main(int argc, char *argv[])
 #endif
 
 #if defined(HAVE_DNSSD)
-	if (options_get_number("C (mDNSResponder)", 1, 0, 1) == 1) {
-		send_result("mDNSResponder", readable, dnssd_browse());
+	if (options_get_number("mDNSResponder", 1, 0, 1) == 1) {
+		send_result("C (mDNSResponder)", readable, dnssd_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
 #if defined(HAVE_QUERY)
-	if (options_get_number("C (Query)", 1, 0, 1) == 1) {
-		send_result("mDNS-SD Query", readable, query_browse());
+	if (options_get_number("Query", 1, 0, 1) == 1) {
+		send_result("C (Query)", readable, query_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
