@@ -3,7 +3,7 @@
 
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "homepage_url": "https://github.com/railduino/zeroconf-lookup",
 
   "icons": {
