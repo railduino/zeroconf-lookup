@@ -12,3 +12,6 @@ zeroconf_lookup
 
 # Ignore LibreOffice temp files
 .~lock.*
+
+# Ignore Chrome private key
+key.pem
