@@ -15,7 +15,7 @@ function onError(error) {
 
 function onResponse(response) {
   var str = JSON.stringify(response, null, 2);
-  var i, server, a, div, hr, br, span;
+  var i, server, a, div, hr, br, line;
 
   var server_list = document.getElementById("server_list");
   server_list.textContent = "";
@@ -28,12 +28,22 @@ function onResponse(response) {
       a.href = server.url;
       a.classList.add("server", "button");
       server_list.appendChild(a);
-      if (server.txt !== "") {
+      br = document.createElement('br');
+      server_list.appendChild(br);
+      if (Array.isArray(server.txt)) {
+        server.txt.forEach(function(item) {
+          line = document.createElement('span');
+          line.textContent = item;
+          server_list.appendChild(line);
+          br = document.createElement('br');
+          server_list.appendChild(br);
+        });
+      } else if (server.txt != null) {
+        line = document.createElement('span');
+        line.textContent = server.txt;
+        server_list.appendChild(line);
         br = document.createElement('br');
         server_list.appendChild(br);
-        span = document.createElement('span');
-        span.textContent = server.txt;
-        server_list.appendChild(span);
       }
       hr = document.createElement('hr');
       server_list.appendChild(hr);

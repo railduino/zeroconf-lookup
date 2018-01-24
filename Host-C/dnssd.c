@@ -34,12 +34,6 @@
 #define POLL_TIMEOUT	1000
 
 
-typedef struct _txt {
-	struct _txt *next;
-	char	*text;
-} txt_t;
-
-
 typedef struct _record {
 	struct _record *next;
 	DNSServiceRef  *newref;

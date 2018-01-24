@@ -79,7 +79,9 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 		const AvahiAddress *address, uint16_t port, AvahiStringList *txt,
 		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, AVAHI_GCC_UNUSED void *userdata)
 {
-	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], tmp_txt[1024], url[1024];
+	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], url[1024];
+	txt_t *list, *tmp;
+	AvahiStringList *run;
 	result_t *result;
 
 	if (event == AVAHI_RESOLVER_FAILURE) {
@@ -101,24 +103,48 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 	}
 
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
-	if (port == 3689) {
-		UTIL_STRCPY(tmp_txt, "DAAP (iTunes) Server");
-	} else {
-		char *t = avahi_string_list_to_string(txt);
-		UTIL_STRCPY(tmp_txt, t);
-		avahi_free(t);
-		util_strtrim(tmp_txt, "\"");
-	}
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
+
+	for (run = txt, list = NULL; run != NULL; run = run->next) {
+		tmp = util_malloc(sizeof(txt_t));
+		tmp->text = util_malloc(run->size + 1);
+		util_strcpy(tmp->text, (char *) run->text, run->size);
+		tmp->next = list;
+		list = tmp;
+	}
+	if (port == 3689) {
+		tmp = util_malloc(sizeof(txt_t));
+		tmp->text = util_strdup("DAAP (iTunes) Server");
+		tmp->next = list;
+		list = tmp;
+	}
 
 	UTIL_STRCPY(answer, "    {\n");
 	util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n",   name);
-	util_append(answer, sizeof(answer), "      \"txt\": \"%s\",\n",    tmp_txt);
+
+	util_append(answer, sizeof(answer), "      \"txt\": [ ");
+	for (tmp = list; tmp != NULL; tmp = tmp->next) {
+		util_append(answer, sizeof(answer), "\"%s\"", tmp->text);
+		if (tmp->next != NULL) {
+			util_append(answer, sizeof(answer), ", ");
+		} else {
+			util_append(answer, sizeof(answer), " ");
+		}
+	}
+	util_append(answer, sizeof(answer), "],\n");
+
 	util_append(answer, sizeof(answer), "      \"target\": \"%s\",\n", host_name);
 	util_append(answer, sizeof(answer), "      \"port\": %u,\n",       port);
 	util_append(answer, sizeof(answer), "      \"a\": \"%s\",\n",      tmp_adr);
 	util_append(answer, sizeof(answer), "      \"url\": \"%s\"\n",     url);
 	UTIL_STRCAT(answer, "    }");
+
+	while (list != NULL) {
+		tmp = list->next;
+		util_free(list->text);
+		util_free(list);
+		list = tmp;
+	}
 
 	avahi_service_resolver_free(r);
 

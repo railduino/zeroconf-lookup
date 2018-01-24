@@ -80,6 +80,12 @@ typedef union {
 } length_t;
 
 
+typedef struct _txt {
+	struct _txt *next;
+	char	*text;
+} txt_t;
+
+
 // Prototypes for avahi.c (Linux only)
 
 #if defined(HAVE_AVAHI)
