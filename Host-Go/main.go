@@ -67,13 +67,13 @@ type ChromeManifest struct {
 var (
 	srvList   = []Server{}
 	timeout   = TIMEOUT
-	verbose   = flag.Bool("v",   false,   "Output diagnostic messages")
-	readable  = flag.Bool("r",   false,   "Use human readable i/o size")
-	install   = flag.Bool("i",   false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
-	uninstall = flag.Bool("u",   false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
-	settime   = flag.Int("t",    TIMEOUT, "Setup server collect timeout (with -i)")
-	extension = flag.String("m", "zeroconf_lookup@railduino.com",    "Setup Mozilla allowed_extensions (with -i)")
 	origin    = flag.String("c", "eajgigammocepkmcgfcicpeljokgcchh", "Setup Chrome allowed_origins (with -i)")
+	install   = flag.Bool("i",   false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
+	extension = flag.String("m", "zeroconf_lookup@railduino.com",    "Setup Mozilla allowed_extensions (with -i)")
+	readable  = flag.Bool("r",   false,   "Use human readable i/o size")
+	settime   = flag.Int("t",    TIMEOUT, "Setup server collect timeout (with -i)")
+	uninstall = flag.Bool("u",   false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
+	verbose   = flag.Bool("v",   false,   "Output diagnostic messages")
 	homedir   = os.Getenv("HOME")
 )
 
@@ -209,9 +209,9 @@ func read_command(input io.Reader) error {
 
 func add_server(name, target, a string, port int, txt []string) {
 	server := Server{
-		Name:   name,
+		Name:   strings.Replace(name, "\\032", " ", -1),
 		Txt:    txt,
-		Target: strings.Trim(target, "."),
+		Target: target,
 		Port:   port,
 		A:      a,
 		Url:    fmt.Sprintf("http://%s:%d/", a, port),
@@ -220,7 +220,7 @@ func add_server(name, target, a string, port int, txt []string) {
 		server.Txt = append([]string{ "DAAP (iTunes) Server" }, server.Txt...)
 	}
 
-	log.Printf("found %s for %s (%v)", server.Url, server.Name, server.Txt)
+	log.Printf("found %s for '%s' (%v)", server.Url, server.Name, server.Txt)
 	srvList = append(srvList, server)
 }
 
@@ -246,11 +246,16 @@ func collect_data() (string, error) {
 			if err != nil || port < 1 || port > 65535 {
 				continue
 			}
-			add_server(fields[3],
-				   strings.TrimSuffix(fields[6], ".local"),
-				   fields[7],
-				   port,
-				   []string{"Hallo", "Welt"})
+			txt := []string{}
+			if len(fields) >= 9 {
+				list := strings.Split(fields[9], `" "`)
+				for _, elem := range list {
+					elem = strings.Trim(elem, `"`)
+					elem = strings.Replace(elem, "\\032", " ", -1)
+					txt = append(txt, elem)
+				}
+			}
+			add_server(fields[3], fields[6], fields[7], port, txt)
 		}
 		return "Go (Avahi)", nil
 	}
@@ -276,7 +281,7 @@ func collect_data() (string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout) * time.Second)
 	defer cancel()
-	if err := resolver.Browse(ctx, "_http._tcp", "local.", entries); err != nil {
+	if err := resolver.Browse(ctx, "_http._tcp", "local", entries); err != nil {
 		return "", err
 	}
 	<-ctx.Done()
