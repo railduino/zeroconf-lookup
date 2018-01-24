@@ -24,7 +24,7 @@
  *
  ****************************************************************************/
 
-#define VERSION		"1.0.3"
+#define VERSION		"2.0.0"
 #define HOST_NAME	"com.railduino.zeroconf_lookup"
 #define DESCRIPTION	"Find HTTP Servers in the .local domain using Zeroconf"
 #define CHROME_TAG	"eajgigammocepkmcgfcicpeljokgcchh"
