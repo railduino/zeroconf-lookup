@@ -87,7 +87,7 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 		AVAHI_GCC_UNUSED void *userdata)
 {
 	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], url[1024];
-	txt_t *list, *tmp, *tail;
+	txt_t *head, *tail, *tmp;
 	AvahiStringList *run;
 	result_t *result;
 	size_t len;
@@ -113,14 +113,14 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
 
-	for (run = txt, list = NULL; run != NULL; run = run->next) {
-		len = run->size + 1;
+	for (run = txt, head = tail = NULL; run != NULL; run = run->next) {
 		tmp = util_malloc(sizeof(txt_t));
+		len = run->size + 1;
 		tmp->text = util_malloc(len);
 		util_strcpy(tmp->text, (char *) run->text, len);
 		tmp->text[run->size] = '\0';	// just for sure
-		if (list == NULL) {
-			list = tail = tmp;
+		if (head == NULL) {
+			head = tail = tmp;
 		} else {
 			tail->next = tmp;
 			tail = tmp;
@@ -129,15 +129,15 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	if (port == 3689) {
 		tmp = util_malloc(sizeof(txt_t));
 		tmp->text = util_strdup("DAAP (iTunes) Server");
-		tmp->next = list;
-		list = tmp;
+		tmp->next = head;
+		head = tmp;
 	}
 
 	UTIL_STRCPY(answer, "    {\n");
 	util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n",   name);
 
 	util_append(answer, sizeof(answer), "      \"txt\": [ ");
-	for (tmp = list; tmp != NULL; tmp = tmp->next) {
+	for (tmp = head; tmp != NULL; tmp = tmp->next) {
 		util_append(answer, sizeof(answer), "\"%s\"", tmp->text);
 		if (tmp->next != NULL) {
 			util_append(answer, sizeof(answer), ", ");
@@ -153,11 +153,11 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	util_append(answer, sizeof(answer), "      \"url\": \"%s\"\n",     url);
 	UTIL_STRCAT(answer, "    }");
 
-	while (list != NULL) {
-		tmp = list->next;
-		util_free(list->text);
-		util_free(list);
-		list = tmp;
+	while (head != NULL) {
+		tmp = head->next;
+		util_free(head->text);
+		util_free(head);
+		head = tmp;
 	}
 
 	avahi_service_resolver_free(r);
