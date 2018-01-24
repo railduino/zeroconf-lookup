@@ -17,6 +17,8 @@ function onResponse(response) {
   var str = JSON.stringify(response, null, 2);
   var i, server, a, div, hr, br, line;
 
+  document.getElementById("source").textContent = browser.i18n.getMessage("htmlSource") + response.source;
+
   var server_list = document.getElementById("server_list");
   server_list.textContent = "";
 

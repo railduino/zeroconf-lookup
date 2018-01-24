@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var str = JSON.stringify(response, null, 2);
     var i, server, a, div, hr, br, span;
+
+    document.getElementById("source").textContent = chrome.i18n.getMessage("htmlSource") + response.source;
+
     var server_list = document.getElementById("server_list");
     server_list.textContent = "";
 

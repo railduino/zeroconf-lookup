@@ -11,8 +11,16 @@ html, body {
   font-size: 1em;
 }
 
-.button.server, span {
+h3 {
+  margin: 5px 0 !important;
+}
+
+.button.server {
   padding: 0 2em;
+}
+
+span {
+  padding: 0 2em 0 3em;
 }
 
 .button a, #message {

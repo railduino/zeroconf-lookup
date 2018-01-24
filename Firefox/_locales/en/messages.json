@@ -19,6 +19,11 @@
     "description": "Popup window header text"
   },
 
+  "htmlSource": {
+    "message": "Source: ",
+    "description": "Inform about data source."
+  },
+
   "htmlWaiting": {
     "message": "Waiting for responses",
     "description": "Display while waiting for responses"
