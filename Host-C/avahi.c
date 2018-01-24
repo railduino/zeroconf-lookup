@@ -72,17 +72,25 @@ avahi_cleanup(void)
 
 
 static void
-avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex interface,
-		AvahiProtocol protocol, AvahiResolverEvent event,
-		const char *name, AVAHI_GCC_UNUSED const char *type,
-		AVAHI_GCC_UNUSED const char *domain, const char *host_name,
-		const AvahiAddress *address, uint16_t port, AvahiStringList *txt,
-		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, AVAHI_GCC_UNUSED void *userdata)
+avahi_resolve_callback(AvahiServiceResolver *r,
+		AVAHI_GCC_UNUSED AvahiIfIndex interface,
+		AvahiProtocol protocol,
+		AvahiResolverEvent event,
+		const char *name,
+		AVAHI_GCC_UNUSED const char *type,
+		AVAHI_GCC_UNUSED const char *domain,
+		const char *host_name,
+		const AvahiAddress *address,
+		uint16_t port,
+		AvahiStringList *txt,
+		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags,
+		AVAHI_GCC_UNUSED void *userdata)
 {
 	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], url[1024];
-	txt_t *list, *tmp;
+	txt_t *list, *tmp, *tail;
 	AvahiStringList *run;
 	result_t *result;
+	size_t len;
 
 	if (event == AVAHI_RESOLVER_FAILURE) {
 		util_error("avahi_resolve_callback() error %s", avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))));
@@ -106,11 +114,17 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
 
 	for (run = txt, list = NULL; run != NULL; run = run->next) {
+		len = run->size + 1;
 		tmp = util_malloc(sizeof(txt_t));
-		tmp->text = util_malloc(run->size + 1);
-		util_strcpy(tmp->text, (char *) run->text, run->size);
-		tmp->next = list;
-		list = tmp;
+		tmp->text = util_malloc(len);
+		util_strcpy(tmp->text, (char *) run->text, len);
+		tmp->text[run->size] = '\0';	// just for sure
+		if (list == NULL) {
+			list = tail = tmp;
+		} else {
+			tail->next = tmp;
+			tail = tmp;
+		}
 	}
 	if (port == 3689) {
 		tmp = util_malloc(sizeof(txt_t));
@@ -165,9 +179,15 @@ avahi_resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex in
 
 
 static void
-avahi_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol,
-		AvahiBrowserEvent event, const char *name, const char *type, const char *domain,
-		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, void *userdata)
+avahi_browse_callback(AvahiServiceBrowser *b,
+		AvahiIfIndex interface,
+		AvahiProtocol protocol,
+		AvahiBrowserEvent event,
+		const char *name,
+		const char *type,
+		const char *domain,
+		AVAHI_GCC_UNUSED AvahiLookupResultFlags flags,
+		void *userdata)
 {
 	AvahiClient *c = userdata;
 
@@ -196,7 +216,9 @@ avahi_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProto
 
 
 static void
-avahi_client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void *userdata)
+avahi_client_callback(AvahiClient *c,
+		AvahiClientState state,
+		AVAHI_GCC_UNUSED void *userdata)
 {
 	if (state == AVAHI_CLIENT_FAILURE) {
 		util_error("avahi_client_callback() error %s", avahi_strerror(avahi_client_errno(c)));
