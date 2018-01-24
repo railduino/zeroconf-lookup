@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -311,10 +312,21 @@ func install_manifests() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if os.Getuid() == 0 {
-		write_manifest("/usr/lib/mozilla/native-messaging-hosts", content)
+
+	if runtime.GOOS == "linux" {
+		if os.Getuid() == 0 {
+			write_manifest("/usr/lib/mozilla/native-messaging-hosts", content)
+		} else {
+			write_manifest(homedir + "/.mozilla/native-messaging-hosts", content)
+		}
+	} else if runtime.GOOS == "darwin" {
+		if os.Getuid() == 0 {
+			write_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts", content)
+		} else {
+			write_manifest(homedir + "/Library/Application Support/Mozilla/NativeMessagingHosts", content)
+		}
 	} else {
-		write_manifest(homedir + "/.mozilla/native-messaging-hosts", content)
+		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
 	}
 
 	////////////////////////// Chrome //////////////////////////
@@ -331,12 +343,25 @@ func install_manifests() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if os.Getuid() == 0 {
-		write_manifest("/etc/opt/chrome/native-messaging-hosts", content)
-		write_manifest("/etc/chromium/native-messaging-hosts",   content)
+
+	if runtime.GOOS == "linux" {
+		if os.Getuid() == 0 {
+			write_manifest("/etc/opt/chrome/native-messaging-hosts", content)
+			write_manifest("/etc/chromium/native-messaging-hosts",   content)
+		} else {
+			write_manifest(homedir + "/.config/google-chrome/NativeMessagingHosts", content)
+			write_manifest(homedir + "/.config/chromium/NativeMessagingHosts",      content)
+		}
+	} else if runtime.GOOS == "darwin" {
+		if os.Getuid() == 0 {
+			write_manifest("/Library/Google/Chrome/NativeMessagingHosts",                content)
+			write_manifest("/Library/Application Support/Chromium/NativeMessagingHosts", content)
+		} else {
+			write_manifest(homedir + "/Library/Application Support/Google/Chrome/NativeMessagingHosts", content)
+			write_manifest(homedir + "/Library/Application Support/Chromium/NativeMessagingHosts",      content)
+		}
 	} else {
-		write_manifest(homedir + "/.config/google-chrome/NativeMessagingHosts", content)
-		write_manifest(homedir + "/.config/chromium/NativeMessagingHosts",      content)
+		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
 	}
 
 	////////////////////////// Config //////////////////////////
@@ -349,18 +374,36 @@ func install_manifests() {
 func uninstall_manifests() {
 	var dirs []string
 
-	if os.Getuid() == 0 {
-		dirs = []string{
-			"/usr/lib/mozilla/native-messaging-hosts",
-			"/etc/opt/chrome/native-messaging-hosts",
-			"/etc/chromium/native-messaging-hosts",
+	if runtime.GOOS == "linux" {
+		if os.Getuid() == 0 {
+			dirs = []string{
+				"/usr/lib/mozilla/native-messaging-hosts",
+				"/etc/opt/chrome/native-messaging-hosts",
+				"/etc/chromium/native-messaging-hosts",
+			}
+		} else {
+			dirs = []string{
+				homedir + "/.mozilla/native-messaging-hosts",
+				homedir + "/.config/google-chrome/NativeMessagingHosts",
+				homedir + "/.config/chromium/NativeMessagingHosts",
+			}
+		}
+	} else if runtime.GOOS == "darwin" {
+		if os.Getuid() == 0 {
+			dirs = []string{
+				"/Library/Application Support/Mozilla/NativeMessagingHosts",
+				"/Library/Google/Chrome/NativeMessagingHosts",
+				"/Library/Application Support/Chromium/NativeMessagingHosts",
+			}
+		} else {
+			dirs = []string{
+				homedir + "/Library/Application Support/Mozilla/NativeMessagingHosts",
+				homedir + "/Library/Application Support/Google/Chrome/NativeMessagingHosts",
+				homedir + "/Library/Application Support/Chromium/NativeMessagingHosts",
+			}
 		}
 	} else {
-		dirs = []string{
-			homedir + "/.mozilla/native-messaging-hosts",
-			homedir + "/.config/google-chrome/NativeMessagingHosts",
-			homedir + "/.config/chromium/NativeMessagingHosts",
-		}
+		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
 	}
 
 	for _, dir := range dirs {

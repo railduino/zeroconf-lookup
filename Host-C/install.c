@@ -123,7 +123,7 @@ install_add_manifest(char *path)
 	fprintf(fp, "  \"description\": \"%s\",\n", DESCRIPTION);
 	fprintf(fp, "  \"path\": \"%s\",\n", my_executable);
 	fprintf(fp, "  \"type\": \"stdio\",\n");
-	if (strstr(path, "mozilla") != NULL) {
+	if (strstr(path, "ozilla") != NULL) {
 		fprintf(fp, "  \"allowed_extensions\": [ \"%s\" ]\n", MOZILLA_TAG);
 	} else {
 		fprintf(fp, "  \"allowed_origins\": [ \"chrome-extension://%s/\" ]\n", CHROME_TAG);
