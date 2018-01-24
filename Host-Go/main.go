@@ -3,19 +3,20 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
-
-	"encoding/binary"
-	"encoding/json"
-	"path/filepath"
-	"io/ioutil"
 
 	"github.com/grandcat/zeroconf"
 	"github.com/spf13/viper"
@@ -34,7 +35,7 @@ type Command struct {
 
 type Server struct {
 	Name    string   `json:"name"`
-	Txt     string   `json:"txt"`
+	Txt     []string `json:"txt"`
 	Target  string   `json:"target"`
 	Port    int      `json:"port"`
 	A       string   `json:"a"`
@@ -105,7 +106,7 @@ func main() {
 	viper.SetEnvPrefix(PROG_NAME)
 	viper.AutomaticEnv()
 
-	viper.SetDefault("timeout", 3)
+	viper.SetDefault("timeout", TIMEOUT)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if strings.Contains(err.Error(), "Not Found") == false {
@@ -134,12 +135,13 @@ func main() {
 		}
 	}
 
-	if err := collect_data(); err != nil {
+	source, err := collect_data()
+	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("time is up")
 
-	output := Output{Version: 2, Source: "Go", Result: srvList}
+	output := Output{Version: 2, Source: source, Result: srvList}
 	buffer := bytes.Buffer{}
 	indent, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
@@ -205,12 +207,57 @@ func read_command(input io.Reader) error {
 	return nil
 }
 
-func collect_data() error {
+func add_server(name, target, a string, port int, txt []string) {
+	server := Server{
+		Name:   name,
+		Txt:    txt,
+		Target: strings.Trim(target, "."),
+		Port:   port,
+		A:      a,
+		Url:    fmt.Sprintf("http://%s:%d/", a, port),
+	}
+	if server.Port == 3689 {
+		server.Txt = append([]string{ "DAAP (iTunes) Server" }, server.Txt...)
+	}
+
+	log.Printf("found %s for %s (%v)", server.Url, server.Name, server.Txt)
+	srvList = append(srvList, server)
+}
+
+func collect_data() (string, error) {
 	log.Println("start collecting")
+
+	path, err := exec.LookPath("avahi-browse")
+	if err == nil {
+		out, _ := exec.Command(path, "-t", "-c", "-r", "-p", "_http._tcp").Output()
+		lines := strings.Split(string(out), "\n")
+		for _, line := range lines {
+			fields := strings.Split(line, ";")
+			if len(fields) < 9 || fields[0] != "=" {
+				continue
+			}
+			if strings.ToLower(fields[2]) != "ipv4" {
+				continue
+			}
+			if strings.Contains(fields[7], ":") {
+				continue
+			}
+			port, err := strconv.Atoi(fields[8])
+			if err != nil || port < 1 || port > 65535 {
+				continue
+			}
+			add_server(fields[3],
+				   strings.TrimSuffix(fields[6], ".local"),
+				   fields[7],
+				   port,
+				   []string{"Hallo", "Welt"})
+		}
+		return "Go (Avahi)", nil
+	}
 
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry)
@@ -219,34 +266,22 @@ func collect_data() error {
 			if len(entry.AddrIPv4) < 1 {
 				continue
 			}
-			v4addr := entry.AddrIPv4[0].String()
-			server := Server{
-				Name:   entry.ServiceRecord.Instance,
-				Txt:    "",
-				Target: strings.Trim(entry.HostName, "."),
-				Port:   entry.Port,
-				A:      v4addr,
-				Url:    fmt.Sprintf("http://%s:%d/", v4addr, entry.Port),
-			}
-			if server.Port == 3689 {
-				server.Txt = "DAAP (iTunes) Server"
-			} else if len(entry.Text) > 0 {
-				server.Txt = entry.Text[0]
-			}
-
-			log.Printf("found %s for %s (%s)", server.Url, server.Name, server.Txt)
-			srvList = append(srvList, server)
+			add_server(entry.ServiceRecord.Instance,
+				   entry.HostName,
+				   entry.AddrIPv4[0].String(),
+				   entry.Port,
+				   entry.Text)
 		}
 	}(entries)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout) * time.Second)
 	defer cancel()
 	if err := resolver.Browse(ctx, "_http._tcp", "local.", entries); err != nil {
-		return err
+		return "", err
 	}
 	<-ctx.Done()
 
-	return nil
+	return "Go (Query)", nil
 }
 
 func install_manifests() {
