@@ -1,0 +1,26 @@
+Browsing for _http._tcp.local
+DATE: ---Thu 25 Jan 2018---
+ 6:07:30.981  ...STARTING...
+
+; To direct clients to browse a different domain, substitute that domain in place of '@'
+lb._dns-sd._udp                                 PTR     @
+
+; In the list of services below, the SRV records will typically reference dot-local Multicast DNS names.
+; When transferring this zone file data to your unicast DNS server, you'll need to replace those dot-local
+; names with the correct fully-qualified (unicast) domain name of the target host offering the service.
+
+_http._tcp                                      PTR     DIGITUS._http._tcp
+DIGITUS._http._tcp                              SRV     0 0 3689 127.local. ; Replace with unicast FQDN of target host
+DIGITUS._http._tcp                              TXT     "Database ID=beddab1edeadbea7"
+
+_http._tcp                                      PTR     LG-NAS-N1A1._http._tcp
+LG-NAS-N1A1._http._tcp                          SRV     0 0 80 LG-NAS-N1A1.local. ; Replace with unicast FQDN of target host
+LG-NAS-N1A1._http._tcp                          TXT     ""
+
+_http._tcp                                      PTR     Brother\032HL-3070CW\032series._http._tcp
+Brother\032HL-3070CW\032series._http._tcp       SRV     0 0 80 dhcppc0.local. ; Replace with unicast FQDN of target host
+Brother\032HL-3070CW\032series._http._tcp       TXT    
+
+_http._tcp                                      PTR     Railduino._http._tcp
+Railduino._http._tcp                            SRV     0 0 43961 T430v.local. ; Replace with unicast FQDN of target host
+Railduino._http._tcp                            TXT     "Modellbahn" "(T430v)"
