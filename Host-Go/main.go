@@ -2,34 +2,27 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/grandcat/zeroconf"
+	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/viper"
 )
 
 const (
-	PROG_NAME = "zeroconf_lookup"
-	HOST_NAME = "com.railduino.zeroconf_lookup"
+	VERSION   = "2.0.1"
+	TIMEOUT   = 2
 	CHROME    = "anjclddigfkhclmgopnjmmpfllfbhfea"
 	MOZILLA   = "zeroconf_lookup@railduino.com"
-	VERSION   = "2.0.0"
-	TIMEOUT   = 2
 )
 
 type Command struct {
@@ -51,23 +44,8 @@ type Output struct {
 	Result  []Server `json:"result"`
 }
 
-type MozillaManifest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Path        string `json:"path"`
-	Type        string `json:"type"`
-	AllowedExtensions []string `json:"allowed_extensions"`
-}
-
-type ChromeManifest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Path        string `json:"path"`
-	Type        string `json:"type"`
-	AllowedOrigins []string `json:"allowed_origins"`
-}
-
 var (
+	my_name   = "zeroconf_lookup"
 	srvList   = []Server{}
 	timeout   = TIMEOUT
 	origin    = flag.String("c", CHROME,  "Setup Chrome allowed_origins (with -i)")
@@ -77,7 +55,6 @@ var (
 	settime   = flag.Int(   "t", TIMEOUT, "Setup server collect timeout (with -i)")
 	uninstall = flag.Bool(  "u", false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
 	verbose   = flag.Bool(  "v", false,   "Output diagnostic messages")
-	homedir   = os.Getenv("HOME")
 )
 
 func main() {
@@ -93,20 +70,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	logfile := filepath.Join(os.TempDir(), PROG_NAME + ".log")
+	logfile := filepath.Join(os.TempDir(), my_name + ".log")
 	f, err := os.OpenFile(logfile, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 	log.SetOutput(f)
-	log.SetPrefix(PROG_NAME + ": ")
+	log.SetPrefix(my_name + ": ")
 
-	viper.SetConfigName(PROG_NAME)
-	viper.AddConfigPath("/etc/" + PROG_NAME + "/")
-	viper.AddConfigPath("$HOME/." + PROG_NAME)
+	viper.SetConfigName(my_name)
+	viper.AddConfigPath("/etc/" + my_name + "/")
+	viper.AddConfigPath("$HOME/." + my_name)
 
-	viper.SetEnvPrefix(PROG_NAME)
+	viper.SetEnvPrefix(my_name)
 	viper.AutomaticEnv()
 
 	viper.SetDefault("timeout", TIMEOUT)
@@ -224,221 +201,27 @@ func add_server(name, target, a string, port int, txt []string) {
 	}
 
 	log.Printf("found %s for '%s' (%v)", server.Url, server.Name, server.Txt)
+
+	for _, srv := range srvList {
+		if cmp.Equal(srv, server) {
+			log.Printf("duplicate %s", server.Name)
+			return
+		}
+	}
+
 	srvList = append(srvList, server)
 }
 
 func collect_data() (string, error) {
 	log.Println("start collecting")
 
-	path, err := exec.LookPath("avahi-browse")
-	if err == nil {
-		out, _ := exec.Command(path, "-t", "-c", "-r", "-p", "_http._tcp").Output()
-		lines := strings.Split(string(out), "\n")
-		for _, line := range lines {
-			fields := strings.Split(line, ";")
-			if len(fields) < 9 || fields[0] != "=" {
-				continue
-			}
-			if strings.ToLower(fields[2]) != "ipv4" {
-				continue
-			}
-			if strings.Contains(fields[7], ":") {
-				continue
-			}
-			port, err := strconv.Atoi(fields[8])
-			if err != nil || port < 1 || port > 65535 {
-				continue
-			}
-			txt := []string{}
-			if len(fields) >= 9 {
-				list := strings.Split(fields[9], `" "`)
-				for _, elem := range list {
-					elem = strings.Trim(elem, `"`)
-					elem = strings.Replace(elem, "\\032", " ", -1)
-					txt = append(txt, elem)
-				}
-			}
-			add_server(fields[3], fields[6], fields[7], port, txt)
-		}
-		return "Go (Avahi)", nil
+	if path, err := exec.LookPath("avahi-browse"); err == nil {
+		return collect_with_avahi(path)
 	}
 
-	resolver, err := zeroconf.NewResolver(nil)
-	if err != nil {
-		return "", err
+	if path, err := exec.LookPath("dns-sd"); err == nil {
+		return collect_with_mDNSResponder(path)
 	}
 
-	entries := make(chan *zeroconf.ServiceEntry)
-	go func(results <-chan *zeroconf.ServiceEntry) {
-		for entry := range results {
-			if len(entry.AddrIPv4) < 1 {
-				continue
-			}
-			add_server(entry.ServiceRecord.Instance,
-				   entry.HostName,
-				   entry.AddrIPv4[0].String(),
-				   entry.Port,
-				   entry.Text)
-		}
-	}(entries)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout) * time.Second)
-	defer cancel()
-	if err := resolver.Browse(ctx, "_http._tcp", "local", entries); err != nil {
-		return "", err
-	}
-	<-ctx.Done()
-
-	return "Go (Query)", nil
-}
-
-func install_manifests() {
-	host_path, err := os.Executable()
-	if err != nil {
-		log.Fatal(err)
-	}
-	host_info := "Find HTTP Servers in the .local domain using Zeroconf"
-	host_type := "stdio"
-
-	////////////////////////// Mozilla //////////////////////////
-	mozilla := MozillaManifest{
-		Name:        HOST_NAME,
-		Description: host_info,
-		Path:        host_path,
-		Type:        host_type,
-		AllowedExtensions: []string{
-			*extension,
-		},
-	}
-	content, err := json.MarshalIndent(mozilla, "", "  ")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if runtime.GOOS == "linux" {
-		if os.Getuid() == 0 {
-			write_manifest("/usr/lib/mozilla/native-messaging-hosts", content)
-		} else {
-			write_manifest(homedir + "/.mozilla/native-messaging-hosts", content)
-		}
-	} else if runtime.GOOS == "darwin" {
-		if os.Getuid() == 0 {
-			write_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts", content)
-		} else {
-			write_manifest(homedir + "/Library/Application Support/Mozilla/NativeMessagingHosts", content)
-		}
-	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
-	}
-
-	////////////////////////// Chrome //////////////////////////
-	chrome := ChromeManifest{
-		Name:        HOST_NAME,
-		Description: host_info,
-		Path:        host_path,
-		Type:        host_type,
-		AllowedOrigins: []string{
-			fmt.Sprintf("chrome-extension://%s/", *origin),
-		},
-	}
-	content, err = json.MarshalIndent(chrome, "", "  ")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if runtime.GOOS == "linux" {
-		if os.Getuid() == 0 {
-			write_manifest("/etc/opt/chrome/native-messaging-hosts", content)
-			write_manifest("/etc/chromium/native-messaging-hosts",   content)
-		} else {
-			write_manifest(homedir + "/.config/google-chrome/NativeMessagingHosts", content)
-			write_manifest(homedir + "/.config/chromium/NativeMessagingHosts",      content)
-		}
-	} else if runtime.GOOS == "darwin" {
-		if os.Getuid() == 0 {
-			write_manifest("/Library/Google/Chrome/NativeMessagingHosts",                content)
-			write_manifest("/Library/Application Support/Chromium/NativeMessagingHosts", content)
-		} else {
-			write_manifest(homedir + "/Library/Application Support/Google/Chrome/NativeMessagingHosts", content)
-			write_manifest(homedir + "/Library/Application Support/Chromium/NativeMessagingHosts",      content)
-		}
-	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
-	}
-
-	////////////////////////// Config //////////////////////////
-	if *settime != TIMEOUT {
-		// TODO write config file
-	}
-
-}
-
-func uninstall_manifests() {
-	var dirs []string
-
-	if runtime.GOOS == "linux" {
-		if os.Getuid() == 0 {
-			dirs = []string{
-				"/usr/lib/mozilla/native-messaging-hosts",
-				"/etc/opt/chrome/native-messaging-hosts",
-				"/etc/chromium/native-messaging-hosts",
-			}
-		} else {
-			dirs = []string{
-				homedir + "/.mozilla/native-messaging-hosts",
-				homedir + "/.config/google-chrome/NativeMessagingHosts",
-				homedir + "/.config/chromium/NativeMessagingHosts",
-			}
-		}
-	} else if runtime.GOOS == "darwin" {
-		if os.Getuid() == 0 {
-			dirs = []string{
-				"/Library/Application Support/Mozilla/NativeMessagingHosts",
-				"/Library/Google/Chrome/NativeMessagingHosts",
-				"/Library/Application Support/Chromium/NativeMessagingHosts",
-			}
-		} else {
-			dirs = []string{
-				homedir + "/Library/Application Support/Mozilla/NativeMessagingHosts",
-				homedir + "/Library/Application Support/Google/Chrome/NativeMessagingHosts",
-				homedir + "/Library/Application Support/Chromium/NativeMessagingHosts",
-			}
-		}
-	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
-	}
-
-	for _, dir := range dirs {
-		filename := filepath.Join(dir, HOST_NAME + ".json")
-		if err := os.Remove(filename); err != nil {
-			if strings.Contains(err.Error(), "no such") == false {
-				log.Fatal(err)
-			}
-		} else {
-			fmt.Printf("removed manifest %s\n", filename)
-		}
-
-		if err := os.Remove(dir); err != nil {
-			if strings.Contains(err.Error(), "no such") == false {
-				if strings.Contains(err.Error(), "not empty") == false {
-					log.Fatal(err)
-				}
-			}
-		} else {
-			fmt.Printf("removed directory %s\n", dir)
-		}
-	}
-}
-
-func write_manifest(dir string, data []byte) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	filename := filepath.Join(dir, HOST_NAME + ".json")
-	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("created manifest %s\n", filename)
+	return collect_with_query()
 }

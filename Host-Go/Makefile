@@ -38,8 +38,9 @@ zeroconf_lookup: main.go
 .PHONY: update clean tags uninstall
 
 update:
-	go get -u github.com/spf13/viper
+	go get -u github.com/google/go-cmp/cmp
 	go get -u github.com/grandcat/zeroconf
+	go get -u github.com/spf13/viper
 
 clean:
 	rm -f zeroconf_lookup tags
