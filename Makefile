@@ -9,6 +9,10 @@ all: README.md
 README.md: README.odt
 	pandoc -f odt -t markdown -o $@ $<
 
+hosts:
+	cd Host-C && make
+	cd Host-Go && make update && make
+
 firefox:
 	cd Firefox && zip -r -FS ../railduino-zeroconf-lookup.xpi *
 
