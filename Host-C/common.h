@@ -82,7 +82,7 @@ typedef union {
 
 typedef struct _txt {
 	struct _txt *next;
-	char	*text;
+	char	text[1];
 } txt_t;
 
 

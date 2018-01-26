@@ -73,7 +73,6 @@ dnssd_cleanup(void)
 
 		while (my_records->txt != NULL) {
 			txt_t *txt = my_records->txt->next;
-			util_free(my_records->txt->text);
 			util_free(my_records->txt);
 			my_records->txt = txt;
 		}
@@ -106,7 +105,7 @@ dnssd_zonedata_resolve(DNSServiceRef  sdref,
 	int port = htons(opaqueport);
 	record_t *record = (record_t *) context;
 	size_t ofs, len;
-	txt_t *ptr, *tmp;
+	txt_t *tail, *ptr;
 
 	util_debug(2, "callback dnssd_zonedata_resolve()");
 	util_debug(3, "dnssd_zonedata_resolve sdref=0x%x flags=0x%x ifIndex=%d fullname=0x%x",
@@ -120,21 +119,16 @@ dnssd_zonedata_resolve(DNSServiceRef  sdref,
 	record->port     = port;
 	util_info("'%s' -> %s:%d", record->replyName, record->hostname, record->port);
 
-	if (txt != NULL && txtLen > 0) {
-		for (ofs = 0; ofs < txtLen && txt[ofs] != 0; ) {
+	if (txt != NULL && txtLen > 0 && txtLen < 256) {
+		for (ofs = 0, tail = NULL; ofs < txtLen && txt[ofs] != 0; ) {
 			len = (size_t) txt[ofs];
-			ptr = util_malloc(sizeof(txt_t));
-			ptr->text = util_malloc(len + 1);
-			util_strcpy(ptr->text, (const char *) txt + ofs + 1, len);
-			ofs += ++len;
-			tmp = record->txt;
-			while (tmp != NULL && tmp->next != NULL) {
-				tmp = tmp->next;
-			}
-			if (tmp == NULL) {
-				record->txt = ptr;
+			ptr = util_malloc(sizeof(txt_t) + len);
+			util_strcpy(ptr->text, (const char *) txt + ofs + 1, len + 1);
+			ofs += (1 + len);
+			if (tail == NULL) {
+				tail = (record->txt = ptr);
 			} else {
-				tmp->next = ptr;
+				tail = (tail->next = ptr);
 			}
 			util_info("    TXT: '%s'", ptr->text);
 		}

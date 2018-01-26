@@ -87,7 +87,7 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 		AVAHI_GCC_UNUSED void *userdata)
 {
 	char answer[4096], tmp_adr[AVAHI_ADDRESS_STR_MAX], url[1024];
-	txt_t *head, *tail, *tmp;
+	txt_t *head, *tail, *ptr;
 	AvahiStringList *run;
 	result_t *result;
 	size_t len;
@@ -113,33 +113,31 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
 
-	for (run = txt, head = tail = NULL; run != NULL; run = run->next) {
-		tmp = util_malloc(sizeof(txt_t));
-		len = run->size + 1;
-		tmp->text = util_malloc(len);
-		util_strcpy(tmp->text, (char *) run->text, len);
-		tmp->text[run->size] = '\0';	// just for sure
-		if (head == NULL) {
-			head = tail = tmp;
+	for (run = txt, tail = NULL; run != NULL; run = run->next) {
+		ptr = util_malloc(sizeof(txt_t) + run->size);
+		util_strcpy(ptr->text, (char *) run->text, run->size + 1);
+		if (tail == NULL) {
+			tail = (head = ptr);
 		} else {
-			tail->next = tmp;
-			tail = tmp;
+			tail = (tail->next = ptr);
 		}
 	}
 	if (port == 3689) {
-		tmp = util_malloc(sizeof(txt_t));
-		tmp->text = util_strdup("DAAP (iTunes) Server");
-		tmp->next = head;
-		head = tmp;
+		char *str = "DAAP (iTunes) Server";
+		len = strlen(str);
+		ptr = util_malloc(sizeof(txt_t) + len);
+		util_strcpy(ptr->text, str, len + 1);
+		ptr->next = head;
+		head = ptr;
 	}
 
 	UTIL_STRCPY(answer, "    {\n");
 	util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n",   name);
 
 	util_append(answer, sizeof(answer), "      \"txt\": [ ");
-	for (tmp = head; tmp != NULL; tmp = tmp->next) {
-		util_append(answer, sizeof(answer), "\"%s\"", tmp->text);
-		if (tmp->next != NULL) {
+	for (ptr = head; ptr != NULL; ptr = ptr->next) {
+		util_append(answer, sizeof(answer), "\"%s\"", ptr->text);
+		if (ptr->next != NULL) {
 			util_append(answer, sizeof(answer), ", ");
 		} else {
 			util_append(answer, sizeof(answer), " ");
@@ -154,10 +152,9 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	UTIL_STRCAT(answer, "    }");
 
 	while (head != NULL) {
-		tmp = head->next;
-		util_free(head->text);
+		ptr = head->next;
 		util_free(head);
-		head = tmp;
+		head = ptr;
 	}
 
 	avahi_service_resolver_free(r);
