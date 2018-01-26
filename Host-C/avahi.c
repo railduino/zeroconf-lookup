@@ -90,7 +90,6 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	txt_t *head, *tail, *ptr;
 	AvahiStringList *run;
 	result_t *result;
-	size_t len;
 
 	if (event == AVAHI_RESOLVER_FAILURE) {
 		util_error("avahi_resolve_callback() error %s", avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))));
