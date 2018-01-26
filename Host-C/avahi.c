@@ -114,7 +114,10 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
 
 	for (run = txt, tail = NULL; run != NULL; run = run->next) {
-		ptr = util_malloc(sizeof(txt_t) + run->size);
+		if (run->size >= sizeof(ptr->text)) {
+			continue;
+		}
+		ptr = util_malloc(sizeof(txt_t));
 		util_strcpy(ptr->text, (char *) run->text, run->size + 1);
 		if (tail == NULL) {
 			tail = (head = ptr);
@@ -123,10 +126,8 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 		}
 	}
 	if (port == 3689) {
-		char *str = "DAAP (iTunes) Server";
-		len = strlen(str);
-		ptr = util_malloc(sizeof(txt_t) + len);
-		util_strcpy(ptr->text, str, len + 1);
+		ptr = util_malloc(sizeof(txt_t));
+		UTIL_STRCPY(ptr->text, "DAAP (iTunes) Server");
 		ptr->next = head;
 		head = ptr;
 	}

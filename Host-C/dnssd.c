@@ -119,10 +119,10 @@ dnssd_zonedata_resolve(DNSServiceRef  sdref,
 	record->port     = port;
 	util_info("'%s' -> %s:%d", record->replyName, record->hostname, record->port);
 
-	if (txt != NULL && txtLen > 0 && txtLen < 256) {
+	if (txt != NULL && txtLen > 0) {
 		for (ofs = 0, tail = NULL; ofs < txtLen && txt[ofs] != 0; ) {
 			len = (size_t) txt[ofs];
-			ptr = util_malloc(sizeof(txt_t) + len);
+			ptr = util_malloc(sizeof(txt_t));
 			util_strcpy(ptr->text, (const char *) txt + ofs + 1, len + 1);
 			ofs += (1 + len);
 			if (tail == NULL) {
@@ -257,7 +257,7 @@ dnssd_browse(void)
 	record_t *record;
 	char answer[4096], url[1024];
 	result_t *result;
-	txt_t *txt;
+	txt_t *ptr;
 
 	atexit(dnssd_cleanup);
 
@@ -335,10 +335,10 @@ dnssd_browse(void)
 	//
 	for (record = my_records; record != NULL; record = record->next) {
 		if (record->port == 3689) {
-			txt = util_malloc(sizeof(txt_t));
-			txt->text = util_strdup("DAAP (iTunes) Server");
-			txt->next = record->txt;
-			record->txt = txt;
+			ptr = util_malloc(sizeof(txt_t));
+			UTIL_STRCPY(ptr->text, "DAAP (iTunes) Server");
+			ptr->next = record->txt;
+			record->txt = ptr;
 		}
 		snprintf(url, sizeof(url), "http://%s:%u/", record->address, record->port);
 		(void) util_strtrim(record->hostname, ".");
@@ -347,9 +347,9 @@ dnssd_browse(void)
 		util_append(answer, sizeof(answer), "      \"name\": \"%s\",\n",   record->replyName);
 
 		util_append(answer, sizeof(answer), "      \"txt\": [ ");
-		for (txt = record->txt; txt != NULL; txt = txt->next) {
-			util_append(answer, sizeof(answer), "\"%s\"", txt->text);
-			if (txt->next != NULL) {
+		for (ptr = record->txt; ptr != NULL; ptr = ptr->next) {
+			util_append(answer, sizeof(answer), "\"%s\"", ptr->text);
+			if (ptr->next != NULL) {
 				util_append(answer, sizeof(answer), ", ");
 			} else {
 				util_append(answer, sizeof(answer), " ");
