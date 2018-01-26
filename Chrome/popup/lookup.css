@@ -7,7 +7,7 @@
 
 html, body {
   font-family: arial,helvetica,sans-serif;
-  min-width: 20em;
+  min-width: 25em;
   font-size: 1em;
 }
 
@@ -25,6 +25,10 @@ span {
 
 .button a, #message {
   font-weight: bold;
+}
+
+#source {
+  font-size: 0.6em;
 }
 
 /* Spinner source: http://tobiasahlin.com/spinkit/ */
