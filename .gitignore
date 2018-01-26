@@ -7,6 +7,9 @@ tags
 *.orig
 zeroconf_lookup
 
+Ignore Windows executables
+*.exe
+
 # Ignore vim swap files
 *.swp
 
