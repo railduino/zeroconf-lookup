@@ -109,10 +109,12 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 		return;
 	}
 
+	util_debug(3, "avahi_resolve_callback() address-in %s", host_name);
 	avahi_address_snprint(tmp_adr, sizeof(tmp_adr), address);
 	snprintf(url, sizeof(url), "http://%s:%u/", tmp_adr, port);
+	util_debug(3, "avahi_resolve_callback() address-out %s", url);
 
-	for (run = txt, tail = NULL; run != NULL; run = run->next) {
+	for (run = txt, head = tail = NULL; run != NULL; run = run->next) {
 		if (run->size >= sizeof(ptr->text)) {
 			continue;
 		}

@@ -66,7 +66,9 @@ debug: zeroconf_lookup
 	cat /tmp/zeroconf_lookup.log
 
 deep: zeroconf_lookup
-	./zeroconf_lookup -r -v -v -v -v -v -v
+	rm -f /tmp/zeroconf_lookup.log
+	- ./zeroconf_lookup -r -v -v -v -v -v -v
+	cat /tmp/zeroconf_lookup.log
 
 install: zeroconf_lookup
 	mkdir -p $(BINDIR)
