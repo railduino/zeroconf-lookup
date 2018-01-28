@@ -7,7 +7,7 @@ import (
 )
 
 func collect_with_avahi(path string) (string, error) {
-	out, err := exec.Command(path, "-t", "-c", "-r", "-p", "_http._tcp").Output()
+	out, err := exec.Command(path, "-t", "-r", "-p", "_http._tcp").Output()
 	if err != nil {
 		return "", err
 	}
