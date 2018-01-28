@@ -27,7 +27,6 @@
 #define VERSION		"2.0.0"
 #define HOST_NAME	"com.railduino.zeroconf_lookup"
 #define DESCRIPTION	"Find HTTP Servers in the .local domain using Zeroconf"
-//#define CHROME_TAG	"bcmcpolaeeiikmoceebmolgbmahbbchn"
 #define CHROME_TAG	"anjclddigfkhclmgopnjmmpfllfbhfea"
 #define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
 #define TIME_OUT	2
@@ -64,7 +63,9 @@
 #endif
 
 #if defined(_WIN32)
-#  include <Windows.h>
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#  pragma comment(lib, "Ws2_32.lib")
 #  define HAVE_DNSSD 1
 #endif
 

@@ -1,0 +1,20 @@
+# Ignore C object and executable files
+*.o
+*.a
+*.so
+*.patch
+tags
+*.orig
+zeroconf_lookup
+
+Ignore Windows executables
+*.exe
+
+# Ignore vim swap files
+*.swp
+
+# Ignore CMake build directories
+Linux
+Windows
+OSX
+

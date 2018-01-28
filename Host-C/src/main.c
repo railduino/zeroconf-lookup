@@ -216,6 +216,14 @@ main(int argc, char *argv[])
 	int c, ofs, readable, instmode;
 	char *logfile = DEFAULT_LOGFILE;
 
+#if defined(_WIN32)
+	WSADATA wsaData;
+	if ((c = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) {
+		util_fatal("WSAStartup failed: %d", c);
+	}
+	atexit(WSACleanup);
+#endif
+
 	for (ofs = readable = instmode = 0; ; ) {
 #if defined(HAVE_GETOPT_LONG)
 		c = getopt_long(argc, argv, "c:h?il:m:rt:uv", long_options, &ofs);
