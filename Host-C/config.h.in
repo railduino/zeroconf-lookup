@@ -7,10 +7,10 @@
 #ifndef _CONFIGURATION_HEADER_GUARD_H_
 #define _CONFIGURATION_HEADER_GUARD_H_
 
-#define zeroconf_VERSION_MAJOR @zeroconf_VERSION_MAJOR@
-#define zeroconf_VERSION_MINOR @zeroconf_VERSION_MINOR@
-#define zeroconf_VERSION_PATCH @zeroconf_VERSION_PATCH@
-#define zeroconf_VERSION "@zeroconf_VERSION@"
+#define VERSION_MAJOR @VERSION_MAJOR@
+#define VERSION_MINOR @VERSION_MINOR@
+#define VERSION_PATCH @VERSION_PATCH@
+#define VERSION "@VERSION@"
 
 #cmakedefine HAVE_STDDEF_H 1
 #cmakedefine HAVE_STDINT_H 1
