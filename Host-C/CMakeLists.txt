@@ -46,7 +46,7 @@ set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 ###########################################################
 #
-# Part 2: Compiling C source files
+# Part 2: Compile C source
 #
 ###########################################################
 
@@ -57,19 +57,39 @@ elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 endif ()
 
 include (CheckIncludeFile)
-check_include_file ("stdint.h"     HAVE_STDINT_H)
-check_include_file ("stddef.h"     HAVE_STDDEF_H)
-check_include_file ("unistd.h"     HAVE_UNISTD_H)
-check_include_file ("getopt.h"     HAVE_GETOPT_H)
-check_include_file ("syslog.h"     HAVE_SYSLOG_H)
-check_include_file ("poll.h"       HAVE_POLL_H)
-check_include_file ("sys/poll.h"   HAVE_SYS_POLL_H)
-check_include_file ("sys/socket.h" HAVE_SYS_SOCKET_H)
-check_include_file ("netinet/in.h" HAVE_NETINET_IN_H)
-check_include_file ("arpa/inet.h"  HAVE_ARPA_INET_H)
-check_include_file ("netdb.h"      HAVE_NETDB_H)
-check_include_file ("winsock2.h"   HAVE_WINSOCK2_H)
-check_include_file ("ws2tcpip.h"   HAVE_WS2TCPIP_H)
+check_include_file ("winsock2.h"    HAVE_WINSOCK2_H)
+check_include_file ("ws2tcpip.h"    HAVE_WS2TCPIP_H)
+
+check_include_file ("stdio.h"       HAVE_STDIO_H)
+check_include_file ("stddef.h"      HAVE_STDDEF_H)
+check_include_file ("stdlib.h"      HAVE_STDLIB_H)
+check_include_file ("stdarg.h"      HAVE_STDARG_H)
+check_include_file ("string.h"      HAVE_STRING_H)
+check_include_file ("time.h"        HAVE_TIME_H)
+check_include_file ("errno.h"       HAVE_ERRNO_H)
+check_include_file ("stdint.h"      HAVE_STDINT_H)
+check_include_file ("sys/types.h"   HAVE_SYS_TYPES_H)
+check_include_file ("unistd.h"      HAVE_UNISTD_H)
+check_include_file ("fcntl.h"       HAVE_FCNTL_H)
+check_include_file ("sys/stat.h"    HAVE_SYS_STAT_H)
+check_include_file ("getopt.h"      HAVE_GETOPT_H)
+check_include_file ("syslog.h"      HAVE_SYSLOG_H)
+check_include_file ("poll.h"        HAVE_POLL_H)
+check_include_file ("sys/poll.h"    HAVE_SYS_POLL_H)
+
+check_include_file ("netdb.h"       HAVE_NETDB_H)
+check_include_file ("socket.h"      HAVE_SOCKET_H)
+check_include_file ("sys/socket.h"  HAVE_SYS_SOCKET_H)
+check_include_file ("netinet/in.h"  HAVE_NETINET_IN_H)
+check_include_file ("arpa/inet.h"   HAVE_ARPA_INET_H)
+
+check_include_file ("mach-o/dyld.h" HAVE_MACH_O_DYLD_H)
+
+include (CheckFunctionExists)
+check_function_exists (poll          HAVE_POLL_FUNC)
+check_function_exists (getopt_long   HAVE_GETOPT_LONG_FUNC)
+check_function_exists (WSAStartup    HAVE_WSASTARTUP_FUNC)
+check_function_exists (PeekNamedPipe HAVE_PEEKNAMEDPIPE_FUNC)
 
 file (GLOB SOURCES "src/*.c")
 include_directories (${CMAKE_BINARY_DIR})
@@ -79,7 +99,7 @@ add_executable (zeroconf_lookup ${SOURCES})
 
 ###########################################################
 #
-# Part 3: Finding OS dependent libraies and linking
+# Part 3: Find OS dependent libraies and linking
 #
 ###########################################################
 
@@ -98,17 +118,15 @@ if (DNSSD_FOUND)
   target_link_libraries (zeroconf_lookup ${DNSSD_LIBRARIES})
 endif (DNSSD_FOUND)
 
-if (HAVE_SYS_SOCKET_H)
-  if (HAVE_NETINET_IN_H)
-    if (HAVE_ARPA_INET_H)
-      if (HAVE_NETDB_H)
+if (HAVE_NETINET_IN_H)
+  if (HAVE_ARPA_INET_H)
+    if (HAVE_NETDB_H)
+      if (HAVE_POLL_FUNC)
         set (QUERY_FOUND TRUE)
-      endif (HAVE_NETDB_H)
-    endif (HAVE_ARPA_INET_H)
-  endif (HAVE_NETINET_IN_H)
-endif (HAVE_SYS_SOCKET_H)
-
-set (EMPTY_FOUND TRUE)
+      endif (HAVE_POLL_FUNC)
+    endif (HAVE_NETDB_H)
+  endif (HAVE_ARPA_INET_H)
+endif (HAVE_NETINET_IN_H)
 
 configure_file (config.h.in config.h)
 
@@ -117,7 +135,7 @@ install (TARGETS zeroconf_lookup RUNTIME DESTINATION bin)
 
 ###########################################################
 #
-# Part 4: Create Mozilla Firefox manifest
+# Part 4: Create OS specific packages
 #
 ###########################################################
 

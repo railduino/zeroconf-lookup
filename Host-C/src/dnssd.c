@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#if defined(HAVE_DNSSD)
+#if defined(DNSSD_FOUND)
 
 #include <dns_sd.h>
 #include <arpa/inet.h>
@@ -380,5 +380,5 @@ dnssd_browse(void)
 	return my_results;
 }
 
-#endif /* defined(HAVE_DNSSD) */
+#endif /* defined(DNSSD_FOUND) */
 

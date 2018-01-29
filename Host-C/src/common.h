@@ -24,49 +24,91 @@
  *
  ****************************************************************************/
 
-#define VERSION		"2.0.0"
 #define HOST_NAME	"com.railduino.zeroconf_lookup"
 #define DESCRIPTION	"Find HTTP Servers in the .local domain using Zeroconf"
 #define CHROME_TAG	"anjclddigfkhclmgopnjmmpfllfbhfea"
 #define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
 #define TIME_OUT	2
+#define DEFAULT_LOGFILE	"/tmp/zeroconf_lookup.log"
 
 
-#if defined(__STDC__)
+#include "config.h"
+
+#if defined(HAVE_WINSOCK2_H)
+#  include <winsock2.h>
+#  pragma comment(lib, "Ws2_32.lib")
+#endif
+#if defined(HAVE_WS2TCPIP_H)
+#  include <ws2tcpip.h>
+#endif
+
+#if defined(HAVE_STDIO_H)
 #  include <stdio.h>
+#endif
+#if defined(HAVE_STDDEF_H)
+#  include <stddef.h>
+#endif
+#if defined(HAVE_STDLIB_H)
 #  include <stdlib.h>
+#endif
+#if defined(HAVE_STDARG_H)
 #  include <stdarg.h>
+#endif
+#if defined(HAVE_STRING_H)
 #  include <string.h>
+#endif
+#if defined(HAVE_TIME_H)
 #  include <time.h>
+#endif
+#if defined(HAVE_ERRNO_H)
 #  include <errno.h>
 #endif
-
-#if defined(__linux__) || defined(__APPLE__)
-#  include <unistd.h>
-#  include <fcntl.h>
-#  include <sys/types.h>
-#  include <sys/stat.h>
+#if defined(HAVE_STDINT_H)
 #  include <stdint.h>
-#  define HAVE_POLL 1
-#  include <poll.h>
-#  define HAVE_GETOPT_LONG 1
+#endif
+#if defined(HAVE_SYS_TYPES_H)
+#  include <sys/types.h>
+#endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
+#endif
+#if defined(HAVE_FCNTL_H)
+#  include <fcntl.h>
+#endif
+#if defined(HAVE_SYS_STAT_H)
+#  include <sys/stat.h>
+#endif
+#if defined(HAVE_GETOPT_H)
 #  include <getopt.h>
-#  define DEFAULT_LOGFILE "/tmp/zeroconf_lookup.log"
-#  if defined(__linux__)
-#    define HAVE_AVAHI 1
-#  endif
-#  if defined(__APPLE__)
-#    include <mach-o/dyld.h>
-#    define HAVE_DNSSD 1
-#  endif
-#  define HAVE_QUERY 1
+#endif
+#if defined(HAVE_SYSLOG_H)
+#  include <syslog.h>
+#endif
+#if defined(HAVE_POLL_H)
+#  include <poll.h>
+#endif
+#if defined(HAVE_SYS_POLL_H)
+#  include <sys/poll.h>
 #endif
 
-#if defined(_WIN32)
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#  pragma comment(lib, "Ws2_32.lib")
-#  define HAVE_DNSSD 1
+#if defined(HAVE_NETDB_H)
+#  include <netdb.h>
+#endif
+#if defined(HAVE_SOCKET_H)
+#  include <socket.h>
+#endif
+#if defined(HAVE_SYS_SOCKET_H)
+#  include <sys/socket.h>
+#endif
+#if defined(HAVE_NETINET_IN_H)
+#  include <netinet/in.h>
+#endif
+#if defined(HAVE_ARPA_INET_H)
+#  include <arpa/inet.h>
+#endif
+
+#if defined(HAVE_MACH_O_DYLD_H)
+#  include <mach-o/dyld.h>
 #endif
 
 
@@ -90,21 +132,21 @@ typedef struct _txt {
 
 // Prototypes for avahi.c (Linux only)
 
-#if defined(HAVE_AVAHI)
+#if defined(AVAHI_FOUND)
 result_t *avahi_browse(void);
 #endif
 
 
 // Prototypes for dnssd.c (mDNSResponder)
 
-#if defined(HAVE_DNSSD)
+#if defined(DNSSD_FOUND)
 result_t *dnssd_browse(void);
 #endif
 
 
 // Prototypes for query.c (built-in mDNS-SD)
 
-#if defined(HAVE_QUERY)
+#if defined(QUERY_FOUND)
 result_t *query_browse(void);
 #endif
 
@@ -118,7 +160,7 @@ result_t *empty_browse(void);
 
 char *options_get_string(char *name, char *dflt);
 int options_get_number(char *name, int dflt, int min, int max);
-void options_init(char *argv0);
+void options_init(void);
 
 
 // Prototypes for install.c

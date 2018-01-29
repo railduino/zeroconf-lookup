@@ -27,7 +27,7 @@
 #include "common.h"
 
 
-#if defined(HAVE_GETOPT_LONG)
+#if defined(HAVE_GETOPT_LONG_FUNC)
 static struct option long_options[] = {
 	{ "chrome",    required_argument, NULL, 'c' },
 	{ "help",      no_argument,       NULL, 'h' },
@@ -73,7 +73,7 @@ usage(char *name, int retval)
 }
 
 
-static int
+/* static */ int
 handle_input_byte(char chr)
 {
 	if (my_length_offset < sizeof(my_length.as_uint)) {
@@ -113,7 +113,7 @@ handle_input_byte(char chr)
 static void
 receive_input(void)
 {
-#if defined(HAVE_POLL)
+#if defined(HAVE_POLL_FUNC)
 	util_debug(1, "awaiting input (poll)");
 	for (;;) {
 		struct pollfd fds[1];
@@ -136,7 +136,7 @@ receive_input(void)
 			}
 		}
 	}
-#elif defined(_WIN32)
+#elif defined(HAVE_PEEKNAMEDPIPE_FUNC)
 	/**
 	 * See: https://stackoverflow.com/a/35060700
 	 */
@@ -213,10 +213,10 @@ send_result(char *source, int readable, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, ofs, readable, instmode;
+	int c, readable, do_inst, do_uninst;
 	char *logfile = DEFAULT_LOGFILE;
 
-#if defined(_WIN32)
+#if defined(HAVE_WSASTARTUP_FUNC)
 	WSADATA wsaData;
 	if ((c = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) {
 		util_fatal("WSAStartup failed: %d", c);
@@ -224,9 +224,9 @@ main(int argc, char *argv[])
 	atexit(WSACleanup);
 #endif
 
-	for (ofs = readable = instmode = 0; ; ) {
-#if defined(HAVE_GETOPT_LONG)
-		c = getopt_long(argc, argv, "c:h?il:m:rt:uv", long_options, &ofs);
+	for (readable = do_inst = do_uninst = 0; ; ) {
+#if defined(HAVE_GETOPT_LONG_FUNC)
+		c = getopt_long(argc, argv, "c:h?il:m:rt:uv", long_options, NULL);
 #else
 		c = getopt(argc, argv, "c:h?il:m:rt:uv");
 #endif
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 				usage(argv[0], EXIT_SUCCESS);
 				break;
 			case 'i':
-				instmode = 'i';
+				do_inst = 1;
 				break;
 			case 'l':
 				logfile = optarg;
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 				install_set_timeout(optarg);
 				break;
 			case 'u':
-				instmode = 'u';
+				do_uninst = 1;
 				break;
 			case 'v':
 				util_inc_verbose();
@@ -268,18 +268,18 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (instmode == 'i') {
+	if (do_inst == 1 || do_uninst == 1) {
 		util_open_logfile("stderr");
-		install_install(argv[0]);
-		exit(EXIT_SUCCESS);
-	}
-	if (instmode == 'u') {
-		util_open_logfile("stderr");
-		install_uninstall();
+		if (do_uninst == 1) {
+			install_uninstall();
+		}
+		if (do_inst == 1) {
+			install_install(argv[0]);
+		}
 		exit(EXIT_SUCCESS);
 	}
 
-	options_init(argv[0]);
+	options_init();
 	util_open_logfile(logfile);
 
 	if (readable == 0) {
@@ -287,21 +287,21 @@ main(int argc, char *argv[])
 	}
 	util_debug(1, "ready for browsing");
 
-#if defined(HAVE_AVAHI)
+#if defined(AVAHI_FOUND)
 	if (options_get_number("Avahi", 1, 0, 1) == 1) {
 		send_result("C (Avahi)", readable, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
-#if defined(HAVE_DNSSD)
+#if defined(DNSSD_FOUND)
 	if (options_get_number("mDNSResponder", 1, 0, 1) == 1) {
 		send_result("C (mDNSResponder)", readable, dnssd_browse());
 		exit(EXIT_SUCCESS);
 	}
 #endif
 
-#if defined(HAVE_QUERY)
+#if defined(QUERY_FOUND)
 	if (options_get_number("Query", 1, 0, 1) == 1) {
 		send_result("C (Query)", readable, query_browse());
 		exit(EXIT_SUCCESS);

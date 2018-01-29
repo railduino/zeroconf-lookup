@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#if defined(HAVE_AVAHI)
+#if defined(AVAHI_FOUND)
 
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
@@ -263,5 +263,5 @@ avahi_browse(void)
 	return my_results;
 }
 
-#endif /* defined(HAVE_AVAHI) */
+#endif /* defined(AVAHI_FOUND) */
 

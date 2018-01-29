@@ -26,13 +26,7 @@
 
 #include "common.h"
 
-#if defined(HAVE_QUERY)
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#if defined(QUERY_FOUND)
 
 #include "parser.h"
 
@@ -255,5 +249,5 @@ query_browse(void)
 	return my_results;
 }
 
-#endif /* defined(HAVE_QUERY) */
+#endif /* defined(QUERY_FOUND) */
 

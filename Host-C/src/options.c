@@ -116,7 +116,7 @@ options_cleanup(void)
 
 
 void
-options_init(char *argv0)
+options_init(void)
 {
 	char config[FILENAME_MAX], line[1024], *ptr;
 	FILE *fp = NULL;
@@ -138,12 +138,6 @@ options_init(char *argv0)
 	}
 	if (fp == NULL) {
 		ptr = "/etc/zeroconf_lookup.conf";
-		fp = fopen(ptr, "r");
-	}
-	if (fp == NULL) {
-		UTIL_STRCPY(config, argv0);
-		UTIL_STRCAT(config, ".conf");
-		ptr = config;
 		fp = fopen(ptr, "r");
 	}
 	if (fp == NULL) {

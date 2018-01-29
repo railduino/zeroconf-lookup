@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#if defined(HAVE_QUERY)
+#if defined(QUERY_FOUND)
 
 #include "parser.h"
 
@@ -381,5 +381,5 @@ parser_parse_answer(char *data, size_t len, DNS_RR *rr, int rr_size)
 	return num;
 }
 
-#endif /* defined(HAVE_QUERY) */
+#endif /* defined(QUERY_FOUND) */
 
