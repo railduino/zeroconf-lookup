@@ -5,9 +5,11 @@
 *.patch
 tags
 *.orig
+
+# Ignore Linux / Apple executable
 zeroconf_lookup
 
-Ignore Windows executables
+# Ignore Windows executables
 *.exe
 
 # Ignore vim swap files
@@ -18,3 +20,7 @@ Ignore Windows executables
 
 # Ignore Chrome private key
 key.pem
+
+# Ignore Apple metadata
+.DS_Store
+

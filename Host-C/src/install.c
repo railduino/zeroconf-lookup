@@ -26,6 +26,24 @@
 
 #include "common.h"
 
+#if defined(__linux__) || defined(__APPLE__)
+
+#if defined(__linux__)
+static char *dir_mozilla_system  = "/usr/lib/mozilla/native-messaging-hosts";
+static char *dir_chrome_system   = "/etc/opt/chrome/native-messaging-hosts";
+static char *dir_chromium_system = "/etc/chromium/native-messaging-hosts";
+static char *dir_mozilla_user    = "~/.mozilla/native-messaging-hosts";
+static char *dir_chrome_user     = "~/.config/google-chrome/NativeMessagingHosts";
+static char *dir_chromium_user   = "~/.config/chromium/NativeMessagingHosts";
+#else
+static char *dir_mozilla_system  = "/Library/Application Support/Mozilla/NativeMessagingHosts";
+static char *dir_chrome_system   = "/Library/Google/Chrome/NativeMessagingHosts";
+static char *dir_chromium_system = "/Library/Application Support/Chromium/NativeMessagingHosts";
+static char *dir_mozilla_user    = "~/Library/Application Support/Mozilla/NativeMessagingHosts";
+static char *dir_chrome_user     = "~/Library/Application Support/Google/Chrome/NativeMessagingHosts";
+static char *dir_chromium_user   = "~/Library/Application Support/Chromium/NativeMessagingHosts";
+#endif
+
 
 static char *my_chrome  = CHROME_TAG;
 static char *my_mozilla = MOZILLA_TAG;
@@ -138,8 +156,9 @@ install_add_manifest(char *path)
 void
 install_install(char *prog)
 {
+	char *ptr;
 #if defined(__linux__)
-	char env_path[FILENAME_MAX], *ptr;
+	char env_path[FILENAME_MAX];
 	struct stat sb;
 
 	if (prog == NULL) {
@@ -165,50 +184,33 @@ install_install(char *prog)
 			util_fatal("can't locate my own executable");
 		}
 	}
-
-	while ((ptr = strstr(my_executable, "/./")) != NULL) {
-		memmove(ptr, ptr + 2, strlen(ptr));
-	}
-
 	if (access(my_executable, X_OK) == -1) {
 		util_fatal("can't access my own executable");
 	}
-	util_info("executable is located at %s", my_executable);
-
-	if (getuid() == 0) {
-		install_add_manifest("/usr/lib/mozilla/native-messaging-hosts");
-		install_add_manifest("/etc/opt/chrome/native-messaging-hosts");
-		install_add_manifest("/etc/chromium/native-messaging-hosts");
-	} else {
-		install_add_manifest("~/.mozilla/native-messaging-hosts");
-		install_add_manifest("~/.config/google-chrome/NativeMessagingHosts");
-		install_add_manifest("~/.config/chromium/NativeMessagingHosts");
-	}
-#elif defined(__APPLE__)
+#else
 	uint32_t size = sizeof(my_executable);
-	char *ptr;
 	(void) prog;    // not necessary
 
 	if (_NSGetExecutablePath(my_executable, &size) != 0) {
 		util_fatal("can't access my own executable");
 	}
+#endif
+
 	while ((ptr = strstr(my_executable, "/./")) != NULL) {
 		memmove(ptr, ptr + 2, strlen(ptr));
 	}
+
 	util_info("executable is located at %s", my_executable);
 
 	if (getuid() == 0) {
-		install_add_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts");
-		install_add_manifest("/Library/Google/Chrome/NativeMessagingHosts");
-		install_add_manifest("/Library/Application Support/Chromium/NativeMessagingHosts");
+		install_add_manifest(dir_mozilla_system);
+		install_add_manifest(dir_chrome_system);
+		install_add_manifest(dir_chromium_system);
 	} else {
-		install_add_manifest("~/Library/Application Support/Mozilla/NativeMessagingHosts");
-		install_add_manifest("~/Library/Application Support/Google/Chrome/NativeMessagingHosts");
-		install_add_manifest("~/Library/Application Support/Chromium/NativeMessagingHosts");
+		install_add_manifest(dir_mozilla_user);
+		install_add_manifest(dir_chrome_user);
+		install_add_manifest(dir_chromium_user);
 	}
-#else
-	util_fatal("sorry -- not yet implemented");
-#endif
 }
 
 
@@ -239,28 +241,20 @@ install_del_manifest(char *path)
 void
 install_uninstall(void)
 {
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 	if (getuid() == 0) {
-		install_del_manifest("/usr/lib/mozilla/native-messaging-hosts");
-		install_del_manifest("/etc/opt/chrome/native-messaging-hosts");
-		install_del_manifest("/etc/chromium/native-messaging-hosts");
+		install_del_manifest(dir_mozilla_system);
+		install_del_manifest(dir_chrome_system);
+		install_del_manifest(dir_chromium_system);
 	} else {
-		install_del_manifest("~/.mozilla/native-messaging-hosts");
-		install_del_manifest("~/.config/google-chrome/NativeMessagingHosts");
-		install_del_manifest("~/.config/chromium/NativeMessagingHosts");
-	}
-#elif defined(__APPLE__)
-	if (getuid() == 0) {
-		install_del_manifest("/Library/Application Support/Mozilla/NativeMessagingHosts");
-		install_del_manifest("/Library/Google/Chrome/NativeMessagingHosts");
-		install_del_manifest("/Library/Application Support/Chromium/NativeMessagingHosts");
-	} else {
-		install_del_manifest("~/Library/Application Support/Mozilla/NativeMessagingHosts");
-		install_del_manifest("~/Library/Application Support/Google/Chrome/NativeMessagingHosts");
-		install_del_manifest("~/Library/Application Support/Chromium/NativeMessagingHosts");
+		install_del_manifest(dir_mozilla_user);
+		install_del_manifest(dir_chrome_user);
+		install_del_manifest(dir_chromium_user);
 	}
 #else
 	util_fatal("sorry -- not yet implemented");
 #endif
 }
+
+#endif /* defined(__linux__) || defined(__APPLE__) */
 
