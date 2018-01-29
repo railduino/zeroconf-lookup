@@ -23,11 +23,12 @@
 #
 
 LINUX_ROOT ?= /usr
+APPLE_ROOT ?= /usr/local
 
-.PHONY: clean Linux-build
+.PHONY: clean Linux-build Apple-build
 
 clean:
-	rm -rf Linux/*
+	rm -rf Linux/[A-Za-z0-9]* Apple/[A-Za-z0-9]*
 
 Linux-build:
 	mkdir -p Linux
@@ -50,4 +51,26 @@ Linux-install-system: Linux-build
 	sudo mkdir -p $(LINUX_ROOT)/bin
 	cd Linux && sudo make install
 	sudo $(LINUX_ROOT)/bin/zeroconf_lookup -i
+
+Apple-build:
+	mkdir -p Apple
+	rm -rf Apple/[A-Za-z0-9]*
+	cd Apple && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(APPLE_ROOT) .. -G "Unix Makefiles"
+	cd Apple && make
+	@echo ""
+	@echo "APPLE_ROOT --> $(APPLE_ROOT)"
+	@echo ""
+
+Apple-uninstall: Apple-build
+	cd Apple && ./zeroconf_lookup -u && sudo ./zeroconf_lookup -u
+
+Apple-install-user: Apple-build
+	mkdir -p $(APPLE_ROOT)/bin
+	cd Apple && make install
+	$(APPLE_ROOT)/bin/zeroconf_lookup -i
+
+Apple-install-system: Apple-build
+	sudo mkdir -p $(APPLE_ROOT)/bin
+	cd Apple && sudo make install
+	sudo $(APPLE_ROOT)/bin/zeroconf_lookup -i
 
