@@ -22,23 +22,29 @@
 # SOFTWARE.
 #
 
-.PHONY: clean Linux
+LINUX_ROOT ?= /usr
+
+.PHONY: clean Linux-build
 
 clean:
 	rm -rf Linux/*
 
-Linux:
+Linux-build:
 	mkdir -p Linux
-	rm -rf Linux/*
-	cd Linux && cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .. -G "Unix Makefiles"
+	rm -rf Linux/[A-Za-z0-9]*
+	cd Linux && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(LINUX_ROOT) .. -G "Unix Makefiles"
 	cd Linux && make
+	@echo ""
+	@echo "LINUX_ROOT --> $(LINUX_ROOT)"
+	@echo ""
 
-Linux-uninstall: Linux
+Linux-uninstall: Linux-build
 	cd Linux && ./zeroconf_lookup -u && sudo ./zeroconf_lookup -u
 
 Linux-install-user: Linux
 	cd Linux && make install && ./zeroconf_lookup -i
 
 Linux-install-system: Linux
-	cd Linux && sudo make install && /usr/bin/zeroconf_lookup -i
+	sudo mkdir -p $(LINUX_ROOT)/bin
+	cd Linux && sudo make install && $(LINUX_ROOT)/bin/zeroconf_lookup -i
 
