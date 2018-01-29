@@ -27,6 +27,7 @@
 #   - http://rachid.koucha.free.fr/tech_corner/cmake_manual.html
 #   - http://cicero.xyz/v2/remark/github/coderefinery/lessons/master/cmake-kung-fu.mkd/
 #   - https://samthursfield.wordpress.com/2015/11/21/cmake-dependencies-between-targets-and-files-and-custom-commands/
+#   - https://stackoverflow.com/questions/6003374/what-is-cmake-equivalent-of-configure-prefix-dir-make-all-install
 #
 
 ###########################################################
