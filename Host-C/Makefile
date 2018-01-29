@@ -41,10 +41,13 @@ Linux-build:
 Linux-uninstall: Linux-build
 	cd Linux && ./zeroconf_lookup -u && sudo ./zeroconf_lookup -u
 
-Linux-install-user: Linux
-	cd Linux && make install && ./zeroconf_lookup -i
+Linux-install-user: Linux-build
+	mkdir -p $(LINUX_ROOT)/bin
+	cd Linux && make install
+	$(LINUX_ROOT)/bin/zeroconf_lookup -i
 
-Linux-install-system: Linux
+Linux-install-system: Linux-build
 	sudo mkdir -p $(LINUX_ROOT)/bin
-	cd Linux && sudo make install && $(LINUX_ROOT)/bin/zeroconf_lookup -i
+	cd Linux && sudo make install
+	sudo $(LINUX_ROOT)/bin/zeroconf_lookup -i
 

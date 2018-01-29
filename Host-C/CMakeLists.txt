@@ -86,12 +86,6 @@ check_include_file ("arpa/inet.h"   HAVE_ARPA_INET_H)
 
 check_include_file ("mach-o/dyld.h" HAVE_MACH_O_DYLD_H)
 
-include (CheckFunctionExists)
-check_function_exists (poll          HAVE_POLL_FUNC)
-check_function_exists (getopt_long   HAVE_GETOPT_LONG_FUNC)
-check_function_exists (WSAStartup    HAVE_WSASTARTUP_FUNC)
-check_function_exists (PeekNamedPipe HAVE_PEEKNAMEDPIPE_FUNC)
-
 file (GLOB SOURCES "src/*.c")
 include_directories (${CMAKE_BINARY_DIR})
 

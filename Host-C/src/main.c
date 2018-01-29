@@ -27,7 +27,7 @@
 #include "common.h"
 
 
-#if defined(HAVE_GETOPT_LONG_FUNC)
+#if defined(HAVE_GETOPT_H)
 static struct option long_options[] = {
 	{ "chrome",    required_argument, NULL, 'c' },
 	{ "help",      no_argument,       NULL, 'h' },
@@ -113,7 +113,7 @@ handle_input_byte(char chr)
 static void
 receive_input(void)
 {
-#if defined(HAVE_POLL_FUNC)
+#if defined(HAVE_POLL_H) || defined(HAVE_SYS_POLL_H)
 	util_debug(1, "awaiting input (poll)");
 	for (;;) {
 		struct pollfd fds[1];
@@ -136,7 +136,7 @@ receive_input(void)
 			}
 		}
 	}
-#elif defined(HAVE_PEEKNAMEDPIPE_FUNC)
+#elif defined(HAVE_WINSOCK2_H)
 	/**
 	 * See: https://stackoverflow.com/a/35060700
 	 */
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 	int c, readable, do_inst, do_uninst;
 	char *logfile = DEFAULT_LOGFILE;
 
-#if defined(HAVE_WSASTARTUP_FUNC)
+#if defined(HAVE_WINSOCK2_H)
 	WSADATA wsaData;
 	if ((c = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) {
 		util_fatal("WSAStartup failed: %d", c);
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 #endif
 
 	for (readable = do_inst = do_uninst = 0; ; ) {
-#if defined(HAVE_GETOPT_LONG_FUNC)
+#if defined(HAVE_GETOPT_H)
 		c = getopt_long(argc, argv, "c:h?il:m:rt:uv", long_options, NULL);
 #else
 		c = getopt(argc, argv, "c:h?il:m:rt:uv");

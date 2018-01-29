@@ -35,7 +35,7 @@
 #include "config.h"
 
 #if defined(HAVE_WINSOCK2_H)
-#  include <winsock2.h>
+#  include <winsock2.h>		// includes windows.h
 #  pragma comment(lib, "Ws2_32.lib")
 #endif
 #if defined(HAVE_WS2TCPIP_H)
