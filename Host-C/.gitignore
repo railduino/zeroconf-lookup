@@ -14,7 +14,7 @@ Ignore Windows executables
 *.swp
 
 # Ignore CMake build directories
-Linux
-Windows
-OSX
+Linux/[A-Za-z0-9]*
+Windows/[A-Za-z0-9]*
+Apple/[A-Za-z0-9]*
 

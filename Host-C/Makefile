@@ -22,72 +22,15 @@
 # SOFTWARE.
 #
 
-ifeq ($(OS),Windows_NT)
-  CCFLAGS += -D__windows__
-else
-  CFLAGS += -g -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wunused-result -Wpointer-arith -Wcast-qual -Winline -Werror
-  UNAME_S := $(shell uname -s)
-  ifeq ($(UNAME_S),Linux)
-    CFLAGS  += $(shell pkg-config --cflags avahi-client)
-    LDFLAGS += $(shell pkg-config --libs   avahi-client)
-    BINDIR = /usr/bin
-  endif
-  ifeq ($(UNAME_S),Darwin)
-    BINDIR = /usr/local/bin
-  endif
-endif
-
-HDRS := $(wildcard *.h)
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
-
-all: zeroconf_lookup
-
-zeroconf_lookup: $(OBJS)
-	ctags *.[ch]
-	gcc -o $@ $^ $(LDFLAGS)
-
-%.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-.PHONY: clean tags uninstall
+.PHONY: clean Linux
 
 clean:
-	rm -f zeroconf_lookup *.o tags
+	rm -rf Linux/*
 
-tags:
-	ctags *.[ch]
-
-run: zeroconf_lookup
-	./zeroconf_lookup -r
-
-debug: zeroconf_lookup
-	rm -f /tmp/zeroconf_lookup.log
-	-./zeroconf_lookup -r -v
-	cat /tmp/zeroconf_lookup.log
-
-deep: zeroconf_lookup
-	rm -f /tmp/zeroconf_lookup.log
-	- ./zeroconf_lookup -r -v -v -v -v -v -v
-	cat /tmp/zeroconf_lookup.log
-
-install: zeroconf_lookup
-	mkdir -p $(BINDIR)
-	install zeroconf_lookup $(BINDIR)
-	$(BINDIR)/zeroconf_lookup -i
-
-user-install: zeroconf_lookup
-	mkdir -p $(HOME)/bin
-	install zeroconf_lookup $(HOME)/bin
-	$(HOME)/bin/zeroconf_lookup -i
-
-uninstall: zeroconf_lookup
-	./zeroconf_lookup -u
-	rm -f $(BINDIR)/zeroconf_lookup
-
-user-uninstall: zeroconf_lookup
-	./zeroconf_lookup -u
-	rm -f $(HOME)/bin/zeroconf_lookup
-
-log: zeroconf_lookup
-	tail -f /tmp/zeroconf_lookup.log
+Linux:
+	mkdir -p Linux
+	rm -rf Linux/*
+	cd Linux && cmake .. -G "Unix Makefiles"
+	cd Linux && make
+	echo $(OS)
 
