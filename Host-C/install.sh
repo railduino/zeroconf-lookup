@@ -213,10 +213,11 @@ echo "###########################################################"
 echo "###########################################################"
 echo ""
 
+mkdir -p "$_exec_dir"
 if [[ $_op_sys == "Linux" ]] ; then
 	make install
 elif [[ $_op_sys == "Darwin" ]] ; then
-	install "$_out_dir/zeroconf_lookup" "$_exec_dir"
+	install -C -v "$_out_dir/zeroconf_lookup" "$_exec_dir"
 fi
 
 
