@@ -46,13 +46,13 @@ if [[ $_op_sys == "Linux" ]] ; then
 	_cmake_gen="Unix Makefiles"
 	_compile="make"
 	_install="make install"
-	_program="./zeroconf_lookup"
+	_out_dir="."
 elif [[ $_op_sys == "Darwin" ]] ; then
 	_root_dir="/usr/local"
 	_cmake_gen="Xcode"
 	_compile="xcodebuild -configuration Release build"
 	_install="xcodebuild -configuration Release install"
-	_program="Release/zeroconf_lookup"
+	_out_dir="Release"
 else
 	echo "Error: unknown operating system $_op_sys" >&2
 	exit 1
@@ -203,8 +203,8 @@ echo "###########################################################"
 echo ""
 
 # we are still in build
-./zeroconf_lookup -u
-sudo ./zeroconf_lookup -u
+$_out_dir/zeroconf_lookup -u
+sudo $_out_dir/zeroconf_lookup -u
 
 
 echo ""
