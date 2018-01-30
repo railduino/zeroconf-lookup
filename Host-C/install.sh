@@ -44,9 +44,11 @@ _user_dir="$HOME"
 if [[ $_op_sys == "Linux" ]] ; then
 	_root_dir="/usr"
 	_cmake_gen="Unix Makefiles"
+	_driver="make"
 elif [[ $_op_sys == "Darwin" ]] ; then
 	_root_dir="/usr/local"
 	_cmake_gen="Xcode"
+	_driver="xcodebuild"
 else
 	echo "Error: unknown operating system $_op_sys" >&2
 	exit 1
@@ -59,9 +61,9 @@ function usage
 		Syntax: $_prog [-u] [-d <dir>]
 		Option: -u   Uninstall (default is install)
 		        -d   (Un-)Install executable into <dir> (without /bin)
-		             Default for UID == 0 : $_root_dir
-		             Default for UID != 0 : $_user_dir
-		To install into $_root_dir use sudo or su
+		             Default when UID == 0 : $_root_dir
+		             Default when UID != 0 : $_user_dir
+		To install system wide use sudo or su
 
 	EOF
 
@@ -185,7 +187,7 @@ rm -rf build 2>/dev/null || sudo rm -rf build
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX:PATH="$_exec_dir" .. -G "$_cmake_gen"
-make
+$_driver
 
 
 echo ""
@@ -196,6 +198,7 @@ echo "###########################################################"
 echo "###########################################################"
 echo ""
 
+# we are still in build
 ./zeroconf_lookup -u
 sudo ./zeroconf_lookup -u
 
