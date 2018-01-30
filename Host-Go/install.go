@@ -12,22 +12,22 @@ import (
 )
 
 const (
-	MANIFEST_NAME       = "com.railduino.zeroconf_lookup"
-	APPLE_CHROME_ROOT   = "/Library/Google/Chrome/NativeMessagingHosts"
-	APPLE_CHROME_USER   = "~/Library/Application Support/Google/Chrome/NativeMessagingHosts"
-	APPLE_CHROMIUM_ROOT = "/Library/Application Support/Chromium/NativeMessagingHosts"
-	APPLE_CHROMIUM_USER = "~/Library/Application Support/Chromium/NativeMessagingHosts"
-	APPLE_MOZILLA_ROOT  = "/Library/Application Support/Mozilla/NativeMessagingHosts"
-	APPLE_MOZILLA_USER  = "~/Library/Application Support/Mozilla/NativeMessagingHosts"
-	LINUX_CHROME_ROOT   = "/etc/opt/chrome/native-messaging-hosts"
-	LINUX_CHROME_USER   = "~/.config/google-chrome/NativeMessagingHosts"
-	LINUX_CHROMIUM_ROOT = "/etc/chromium/native-messaging-hosts"
-	LINUX_CHROMIUM_USER = "~/.config/chromium/NativeMessagingHosts"
-	LINUX_MOZILLA_ROOT  = "/usr/lib/mozilla/native-messaging-hosts"
-	LINUX_MOZILLA_USER  = "~/.mozilla/native-messaging-hosts"
+	manifestName      = "com.railduino.zeroconf_lookup"
+	appleChromeRoot   = "/Library/Google/Chrome/NativeMessagingHosts"
+	appleChromeUser   = "~/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+	appleChromiumRoot = "/Library/Application Support/Chromium/NativeMessagingHosts"
+	appleChromiumUser = "~/Library/Application Support/Chromium/NativeMessagingHosts"
+	appleMozillaRoot  = "/Library/Application Support/Mozilla/NativeMessagingHosts"
+	appleMozillaUser  = "~/Library/Application Support/Mozilla/NativeMessagingHosts"
+	linuxChromeRoot   = "/etc/opt/chrome/native-messaging-hosts"
+	linuxChromeUser   = "~/.config/google-chrome/NativeMessagingHosts"
+	linuxChromiumRoot = "/etc/chromium/native-messaging-hosts"
+	linuxChromiumUser = "~/.config/chromium/NativeMessagingHosts"
+	linuxMozillaRoot  = "/usr/lib/mozilla/native-messaging-hosts"
+	linuxMozillaUser  = "~/.mozilla/native-messaging-hosts"
 )
 
-type MozillaManifest struct {
+type mozillaManifest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Path        string `json:"path"`
@@ -35,7 +35,7 @@ type MozillaManifest struct {
 	AllowedExtensions []string `json:"allowed_extensions"`
 }
 
-type ChromeManifest struct {
+type chromeManifest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Path        string `json:"path"`
@@ -43,20 +43,20 @@ type ChromeManifest struct {
 	AllowedOrigins []string `json:"allowed_origins"`
 }
 
-func install_manifests() {
-	host_path, err := os.Executable()
+func installManifests() {
+	hostPath, err := os.Executable()
 	if err != nil {
 		log.Fatal(err)
 	}
-	host_info := "Find HTTP Servers in the .local domain using Zeroconf"
-	host_type := "stdio"
+	hostInfo := "Find HTTP Servers in the .local domain using Zeroconf"
+	hostType := "stdio"
 
 	////////////////////////// Mozilla //////////////////////////
-	mozilla := MozillaManifest{
-		Name:        MANIFEST_NAME,
-		Description: host_info,
-		Path:        host_path,
-		Type:        host_type,
+	mozilla := mozillaManifest{
+		Name:        manifestName,
+		Description: hostInfo,
+		Path:        hostPath,
+		Type:        hostType,
 		AllowedExtensions: []string{ *extension },
 	}
 	content, err := json.MarshalIndent(mozilla, "", "  ")
@@ -66,26 +66,26 @@ func install_manifests() {
 
 	if runtime.GOOS == "linux" {
 		if os.Getuid() == 0 {
-			write_manifest(LINUX_MOZILLA_ROOT, content)
+			writeManifest(linuxMozillaRoot, content)
 		} else {
-			write_manifest(LINUX_MOZILLA_USER, content)
+			writeManifest(linuxMozillaUser, content)
 		}
 	} else if runtime.GOOS == "darwin" {
 		if os.Getuid() == 0 {
-			write_manifest(APPLE_MOZILLA_ROOT, content)
+			writeManifest(appleMozillaRoot, content)
 		} else {
-			write_manifest(APPLE_MOZILLA_USER, content)
+			writeManifest(appleMozillaUser, content)
 		}
 	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
+		log.Fatal("sorry -- OS not yet implemented: " + runtime.GOOS)
 	}
 
 	////////////////////////// Chrome //////////////////////////
-	chrome := ChromeManifest{
-		Name:        MANIFEST_NAME,
-		Description: host_info,
-		Path:        host_path,
-		Type:        host_type,
+	chrome := chromeManifest{
+		Name:        manifestName,
+		Description: hostInfo,
+		Path:        hostPath,
+		Type:        hostType,
 		AllowedOrigins: []string{ fmt.Sprintf("chrome-extension://%s/", *origin) },
 	}
 	content, err = json.MarshalIndent(chrome, "", "  ")
@@ -95,91 +95,91 @@ func install_manifests() {
 
 	if runtime.GOOS == "linux" {
 		if os.Getuid() == 0 {
-			write_manifest(LINUX_CHROME_ROOT,   content)
-			write_manifest(LINUX_CHROMIUM_ROOT, content)
+			writeManifest(linuxChromeRoot,   content)
+			writeManifest(linuxChromiumRoot, content)
 		} else {
-			write_manifest(LINUX_CHROME_USER,   content)
-			write_manifest(LINUX_CHROMIUM_USER, content)
+			writeManifest(linuxChromeUser,   content)
+			writeManifest(linuxChromiumUser, content)
 		}
 	} else if runtime.GOOS == "darwin" {
 		if os.Getuid() == 0 {
-			write_manifest(APPLE_CHROME_ROOT,   content)
-			write_manifest(APPLE_CHROMIUM_ROOT, content)
+			writeManifest(appleChromeRoot,   content)
+			writeManifest(appleChromiumRoot, content)
 		} else {
-			write_manifest(APPLE_CHROME_USER,   content)
-			write_manifest(APPLE_CHROMIUM_USER, content)
+			writeManifest(appleChromeUser,   content)
+			writeManifest(appleChromiumUser, content)
 		}
 	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
+		log.Fatal("sorry -- OS not yet implemented: " + runtime.GOOS)
 	}
 
 	////////////////////////// Config //////////////////////////
-	if *settime != TIMEOUT {
+	if *settime != 2 {
 		// TODO write config file
 	}
 
 }
 
-func write_manifest(dirname string, data []byte) {
-	homedir := os.Getenv("HOME")
-	if strings.HasPrefix(dirname, "~") && homedir != "" {
-		dirname = strings.Replace(dirname, "~", homedir, 1)
+func writeManifest(dirName string, data []byte) {
+	homeDir := os.Getenv("HOME")
+	if strings.HasPrefix(dirName, "~") && homeDir != "" {
+		dirName = strings.Replace(dirName, "~", homeDir, 1)
 	}
 
-	if err := os.MkdirAll(dirname, 0755); err != nil {
+	if err := os.MkdirAll(dirName, 0755); err != nil {
 		log.Fatal(err)
 	}
 
-	filename := filepath.Join(dirname, MANIFEST_NAME + ".json")
-	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
+	fileName := filepath.Join(dirName, manifestName + ".json")
+	if err := ioutil.WriteFile(fileName, data, 0644); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("created manifest %s\n", filename)
+	fmt.Printf("created manifest %s\n", fileName)
 }
 
-func uninstall_manifests() {
+func uninstallManifests() {
 	var dirs []string
 
 	if runtime.GOOS == "linux" {
 		if os.Getuid() == 0 {
-			dirs = []string{ LINUX_CHROME_ROOT, LINUX_CHROMIUM_ROOT, LINUX_MOZILLA_ROOT }
+			dirs = []string{ linuxChromeRoot, linuxChromiumRoot, linuxMozillaRoot }
 		} else {
-			dirs = []string{ LINUX_CHROME_USER, LINUX_CHROMIUM_USER, LINUX_MOZILLA_USER }
+			dirs = []string{ linuxChromeUser, linuxChromiumUser, linuxMozillaUser }
 		}
 	} else if runtime.GOOS == "darwin" {
 		if os.Getuid() == 0 {
-			dirs = []string{ APPLE_CHROME_ROOT, APPLE_CHROMIUM_ROOT, APPLE_MOZILLA_ROOT }
+			dirs = []string{ appleChromeRoot, appleChromiumRoot, appleMozillaRoot }
 		} else {
-			dirs = []string{ APPLE_CHROME_USER, APPLE_CHROMIUM_USER, APPLE_MOZILLA_USER }
+			dirs = []string{ appleChromeUser, appleChromiumUser, appleMozillaUser }
 		}
 	} else {
-		log.Fatal("sorry -- OS %s not yet implemented", runtime.GOOS)
+		log.Fatal("sorry -- OS not yet implemented: " + runtime.GOOS)
 	}
 
-	for _, dirname := range dirs {
-		homedir := os.Getenv("HOME")
-		if strings.HasPrefix(dirname, "~") && homedir != "" {
-			dirname = strings.Replace(dirname, "~", homedir, 1)
+	for _, dirName := range dirs {
+		homeDir := os.Getenv("HOME")
+		if strings.HasPrefix(dirName, "~") && homeDir != "" {
+			dirName = strings.Replace(dirName, "~", homeDir, 1)
 		}
 
-		filename := filepath.Join(dirname, MANIFEST_NAME + ".json")
-		if err := os.Remove(filename); err != nil {
+		fileName := filepath.Join(dirName, manifestName + ".json")
+		if err := os.Remove(fileName); err != nil {
 			if strings.Contains(err.Error(), "no such") == false {
 				log.Fatal(err)
 			}
 		} else {
-			fmt.Printf("removed manifest %s\n", filename)
+			fmt.Printf("removed manifest %s\n", fileName)
 		}
 
-		if err := os.Remove(dirname); err != nil {
+		if err := os.Remove(dirName); err != nil {
 			if strings.Contains(err.Error(), "no such") == false {
 				if strings.Contains(err.Error(), "not empty") == false {
 					log.Fatal(err)
 				}
 			}
 		} else {
-			fmt.Printf("removed directory %s\n", dirname)
+			fmt.Printf("removed directory %s\n", dirName)
 		}
 	}
 }

@@ -19,40 +19,39 @@ import (
 )
 
 const (
-	VERSION   = "2.0.1"
-	TIMEOUT   = 2
-	CHROME    = "anjclddigfkhclmgopnjmmpfllfbhfea"
-	MOZILLA   = "zeroconf_lookup@railduino.com"
+	version = "2.0.1"
+	chrome  = "anjclddigfkhclmgopnjmmpfllfbhfea"
+	mozilla = "zeroconf_lookup@railduino.com"
 )
 
-type Command struct {
+type command struct {
 	Cmd string `json:"cmd"`
 }
 
-type Server struct {
+type server struct {
 	Name    string   `json:"name"`
 	Txt     []string `json:"txt"`
 	Target  string   `json:"target"`
 	Port    int      `json:"port"`
 	A       string   `json:"a"`
-	Url     string   `json:"url"`
+	URL     string   `json:"url"`
 }
 
-type Output struct {
+type output struct {
 	Version int      `json:"version"`
 	Source  string   `json:"source"`
-	Result  []Server `json:"result"`
+	Result  []server `json:"result"`
 }
 
 var (
-	my_name   = "zeroconf_lookup"
-	srvList   = []Server{}
-	timeout   = TIMEOUT
-	origin    = flag.String("c", CHROME,  "Setup Chrome allowed_origins (with -i)")
+	myName    = "zeroconf_lookup"
+	srvList   = []server{}
+	timeout   = 2
+	origin    = flag.String("c", chrome,  "Setup Chrome allowed_origins (with -i)")
 	install   = flag.Bool(  "i", false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
-	extension = flag.String("m", MOZILLA, "Setup Mozilla allowed_extensions (with -i)")
+	extension = flag.String("m", mozilla, "Setup Mozilla allowed_extensions (with -i)")
 	readable  = flag.Bool(  "r", false,   "Use human readable i/o size")
-	settime   = flag.Int(   "t", TIMEOUT, "Setup server collect timeout (with -i)")
+	settime   = flag.Int(   "t", 2,       "Setup server collect timeout (with -i)")
 	uninstall = flag.Bool(  "u", false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
 	verbose   = flag.Bool(  "v", false,   "Output diagnostic messages")
 )
@@ -61,32 +60,32 @@ func main() {
 	flag.Parse()
 
 	if *install {
-		install_manifests()
+		installManifests()
 		os.Exit(0)
 	}
 
 	if *uninstall {
-		uninstall_manifests()
+		uninstallManifests()
 		os.Exit(0)
 	}
 
-	logfile := filepath.Join(os.TempDir(), my_name + ".log")
+	logfile := filepath.Join(os.TempDir(), myName + ".log")
 	f, err := os.OpenFile(logfile, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 	log.SetOutput(f)
-	log.SetPrefix(my_name + ": ")
+	log.SetPrefix(myName + ": ")
 
-	viper.SetConfigName(my_name)
-	viper.AddConfigPath("/etc/" + my_name + "/")
-	viper.AddConfigPath("$HOME/." + my_name)
+	viper.SetConfigName(myName)
+	viper.AddConfigPath("/etc/" + myName + "/")
+	viper.AddConfigPath("$HOME/." + myName)
 
-	viper.SetEnvPrefix(my_name)
+	viper.SetEnvPrefix(myName)
 	viper.AutomaticEnv()
 
-	viper.SetDefault("timeout", TIMEOUT)
+	viper.SetDefault("timeout", 2)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if strings.Contains(err.Error(), "Not Found") == false {
@@ -100,14 +99,14 @@ func main() {
 	if *verbose {
 		fmt.Printf("Logfile is: %s\n", logfile)
 
-		log.Printf("VERSION .........: %s", VERSION)
+		log.Printf("version .........: %s", version)
 		log.Printf("readable ........: %v", *readable)
 		log.Printf("verbose .........: %v", *verbose)
 		log.Printf("timeout .........: %d", timeout)
 	}
 
 	if *readable == false {
-		if err := read_command(os.Stdin); err != nil {
+		if err := readCommand(os.Stdin); err != nil {
 			if err != io.EOF {
 				log.Fatal(err)
 			}
@@ -115,15 +114,15 @@ func main() {
 		}
 	}
 
-	source, err := collect_data()
+	source, err := collectData()
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("time is up")
 
-	output := Output{Version: 2, Source: source, Result: srvList}
+	result := output{Version: 2, Source: source, Result: srvList}
 	buffer := bytes.Buffer{}
-	indent, err := json.MarshalIndent(output, "", "  ")
+	indent, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -147,81 +146,78 @@ func main() {
 	os.Exit(0)
 }
 
-func read_command(input io.Reader) error {
-	cnt_buf := make([]byte, 4)
-	cnt, err := io.ReadAtLeast(input, cnt_buf, 4)
-	if err != nil {
+func readCommand(input io.Reader) error {
+	cntBuf := make([]byte, 4)
+	if cnt, err := io.ReadAtLeast(input, cntBuf, 4); err != nil {
 		return err
+	} else if cnt != 4 {
+		return errors.New("missing count input")
 	}
-	if cnt != 4 {
-		return errors.New("missing input")
-	}
-
-	counter := int(binary.LittleEndian.Uint32(cnt_buf))
+	counter := int(binary.LittleEndian.Uint32(cntBuf))
 	log.Printf("expect %d message bytes", counter)
 
-	msg_buf := make([]byte, counter)
-	cnt, err = io.ReadAtLeast(input, msg_buf, counter)
-	if err != nil {
+	msgBuf := make([]byte, counter)
+	if cnt, err := io.ReadAtLeast(input, msgBuf, counter); err != nil {
 		return err
+	} else if cnt != counter {
+		return errors.New("missing data input")
 	}
-	msg_str := strings.Trim(string(msg_buf), `"`)
+	msgStr := strings.Trim(string(msgBuf), `"`)
 
-	if msg_str == "Lookup" {
+	if msgStr == "Lookup" {
 		log.Printf("found Lookup (plain)")
 		return nil
 	}
 
-	msg_str = strings.Replace(msg_str, "\\\"", "\"", -1)
-	msg_buf = []byte(msg_str)
-	command := Command{}
-	if err := json.Unmarshal(msg_buf, &command); err != nil {
+	msgStr = strings.Replace(msgStr, "\\\"", "\"", -1)
+	msgBuf = []byte(msgStr)
+	msgCmd := command{}
+	if err := json.Unmarshal(msgBuf, &msgCmd); err != nil {
 		return err
 	}
-	if command.Cmd == "Lookup" {
+	if msgCmd.Cmd == "Lookup" {
 		log.Printf("found Lookup (JSON)")
 		return nil
 	}
 
-	log.Printf("unknown command %+v", command)
+	log.Printf("unknown command %+v", msgCmd)
 	return nil
 }
 
-func add_server(name, target, a string, port int, txt []string) {
-	server := Server{
+func addServer(name, target, a string, port int, txt []string) {
+	newSrv := server{
 		Name:   strings.Replace(name, "\\032", " ", -1),
 		Txt:    txt,
 		Target: target,
 		Port:   port,
 		A:      a,
-		Url:    fmt.Sprintf("http://%s:%d/", a, port),
+		URL:    fmt.Sprintf("http://%s:%d/", a, port),
 	}
-	if server.Port == 3689 {
-		server.Txt = append([]string{ "DAAP (iTunes) Server" }, server.Txt...)
+	if newSrv.Port == 3689 {
+		newSrv.Txt = append([]string{ "DAAP (iTunes) Server" }, newSrv.Txt...)
 	}
-
-	log.Printf("found %s for '%s' (%v)", server.Url, server.Name, server.Txt)
 
 	for _, srv := range srvList {
-		if cmp.Equal(srv, server) {
-			log.Printf("duplicate %s", server.Name)
+		if cmp.Equal(srv, newSrv) {
+			log.Printf("duplicate %s", newSrv.Name)
 			return
 		}
 	}
 
-	srvList = append(srvList, server)
+	log.Printf("found %s for '%s' (%v)", newSrv.URL, newSrv.Name, newSrv.Txt)
+	srvList = append(srvList, newSrv)
 }
 
-func collect_data() (string, error) {
+func collectData() (string, error) {
 	log.Println("start collecting")
 
 	if path, err := exec.LookPath("avahi-browse"); err == nil {
-		return collect_with_avahi(path)
+		return collectWithAvahi(path)
 	}
 
 	if path, err := exec.LookPath("dns-sd"); err == nil {
-		return collect_with_mDNSResponder(path)
+		return collectWithDnssd(path)
 	}
 
-	return collect_with_query()
+	return collectWithQuery()
 }

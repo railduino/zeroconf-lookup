@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func collect_with_mDNSResponder(path string) (string, error) {
+func collectWithDnssd(path string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout) * time.Second)
 	defer cancel()
 

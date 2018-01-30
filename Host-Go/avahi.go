@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func collect_with_avahi(path string) (string, error) {
+func collectWithAvahi(path string) (string, error) {
 	out, err := exec.Command(path, "-t", "-r", "-p", "_http._tcp").Output()
 	if err != nil {
 		return "", err
@@ -39,10 +39,12 @@ func collect_with_avahi(path string) (string, error) {
 			for _, elem := range list {
 				elem = strings.Trim(elem, `"`)
 				elem = strings.Replace(elem, "\\032", " ", -1)
-				txt = append(txt, elem)
+				if elem != "" {
+					txt = append(txt, elem)
+				}
 			}
 		}
-		add_server(fields[3], fields[6], fields[7], port, txt)
+		addServer(fields[3], fields[6], fields[7], port, txt)
 	}
 
 	return "Go (Avahi)", nil

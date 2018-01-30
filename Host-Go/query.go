@@ -7,7 +7,7 @@ import (
 	"github.com/grandcat/zeroconf"
 )
 
-func collect_with_query() (string, error) {
+func collectWithQuery() (string, error) {
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		return "", err
@@ -19,7 +19,7 @@ func collect_with_query() (string, error) {
 			if len(entry.AddrIPv4) < 1 {
 				continue
 			}
-			add_server(entry.ServiceRecord.Instance,
+			addServer(entry.ServiceRecord.Instance,
 				   entry.HostName,
 				   entry.AddrIPv4[0].String(),
 				   entry.Port,
