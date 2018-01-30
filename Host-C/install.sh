@@ -97,7 +97,6 @@ done
 
 if [[ $_uninst ]] ; then
 	_manifest="com.railduino.zeroconf_lookup.json"
-	_program="zeroconf_lookup"
 
 	if [[ $_op_sys == "Linux" ]] ; then
 		for _dir in "/usr/lib/mozilla/native-messaging-hosts" \
@@ -217,7 +216,7 @@ mkdir -p "$_exec_dir"
 if [[ $_op_sys == "Linux" ]] ; then
 	make install
 elif [[ $_op_sys == "Darwin" ]] ; then
-	install -C -v "$_out_dir/zeroconf_lookup" "$_exec_dir"
+	install -C -v "$_out_dir/zeroconf_lookup" "$_exec_dir/bin"
 fi
 
 
