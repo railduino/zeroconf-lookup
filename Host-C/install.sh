@@ -52,7 +52,7 @@ elif [[ $_op_sys == "Darwin" ]] ; then
 	_cmake_gen="Xcode"
 	_compile="xcodebuild -configuration Release build"
 	_install="xcodebuild -configuration Release install"
-	_out_dir="UninstalledProducts/macosx"
+	_out_dir="./Release"
 else
 	echo "Error: unknown operating system $_op_sys" >&2
 	exit 1
