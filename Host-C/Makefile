@@ -22,55 +22,52 @@
 # SOFTWARE.
 #
 
-LINUX_ROOT ?= /usr
-APPLE_ROOT ?= /usr/local
+ifeq ($(OS),Windows_NT)
+EXEC_DIR ?= whatever
+GENERATE ?= CodeBlocks
+else
+ifeq ($(shell uname),Linux)
+EXEC_DIR ?= /usr
+GENERATE ?= Unix Makefiles
+else
+ifeq ($(shell uname),Darwin)
+EXEC_DIR ?= /usr/local
+GENERATE ?= Xcode
+else
+unknown_system
+endif
+endif
+endif
 
-.PHONY: clean Linux-build Apple-build
+
+.PHONY: clean
+
+build: clean
+	mkdir -p build
+	cd build && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(EXEC_DIR) .. -G "$(GENERATE)"
+	cd build && make
+	@echo ""
+	@echo "EXEC_DIR --> $(EXEC_DIR)"
+	@echo "GENERATE --> $(GENERATE)"
+	@echo ""
+
+install-user: build
+	mkdir -p $(EXEC_DIR)/bin
+	cd build && make install
+	cd build && sudo ./zeroconf_lookup -u
+	$(EXEC_DIR)/bin/zeroconf_lookup -i
+
+install-system: build
+	sudo mkdir -p $(EXEC_DIR)/bin
+	cd build && sudo make install
+	cd build && ./zeroconf_lookup -u
+	sudo $(EXEC_DIR)/bin/zeroconf_lookup -i
+
+uninstall: build
+	cd build && ./zeroconf_lookup -u
+	cd build && sudo ./zeroconf_lookup -u
+	sudo rm -f $(EXEC_DIR)/bin/zeroconf_lookup
 
 clean:
-	rm -rf Linux/[A-Za-z0-9]* Apple/[A-Za-z0-9]*
-
-Linux-build:
-	mkdir -p Linux
-	rm -rf Linux/[A-Za-z0-9]*
-	cd Linux && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(LINUX_ROOT) .. -G "Unix Makefiles"
-	cd Linux && make
-	@echo ""
-	@echo "LINUX_ROOT --> $(LINUX_ROOT)"
-	@echo ""
-
-Linux-uninstall: Linux-build
-	cd Linux && ./zeroconf_lookup -u && sudo ./zeroconf_lookup -u
-
-Linux-install-user: Linux-build
-	mkdir -p $(LINUX_ROOT)/bin
-	cd Linux && make install
-	$(LINUX_ROOT)/bin/zeroconf_lookup -i
-
-Linux-install-system: Linux-build
-	sudo mkdir -p $(LINUX_ROOT)/bin
-	cd Linux && sudo make install
-	sudo $(LINUX_ROOT)/bin/zeroconf_lookup -i
-
-Apple-build:
-	mkdir -p Apple
-	rm -rf Apple/[A-Za-z0-9]*
-	cd Apple && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(APPLE_ROOT) .. -G "Unix Makefiles"
-	cd Apple && make
-	@echo ""
-	@echo "APPLE_ROOT --> $(APPLE_ROOT)"
-	@echo ""
-
-Apple-uninstall: Apple-build
-	cd Apple && ./zeroconf_lookup -u && sudo ./zeroconf_lookup -u
-
-Apple-install-user: Apple-build
-	mkdir -p $(APPLE_ROOT)/bin
-	cd Apple && make install
-	$(APPLE_ROOT)/bin/zeroconf_lookup -i
-
-Apple-install-system: Apple-build
-	sudo mkdir -p $(APPLE_ROOT)/bin
-	cd Apple && sudo make install
-	sudo $(APPLE_ROOT)/bin/zeroconf_lookup -i
+	rm -rf build/[A-Za-z0-9]*
 
