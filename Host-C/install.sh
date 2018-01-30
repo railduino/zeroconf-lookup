@@ -44,11 +44,13 @@ _user_dir="$HOME"
 if [[ $_op_sys == "Linux" ]] ; then
 	_root_dir="/usr"
 	_cmake_gen="Unix Makefiles"
-	_driver="make"
+	_compile="make"
+	_install="make install"
 elif [[ $_op_sys == "Darwin" ]] ; then
 	_root_dir="/usr/local"
 	_cmake_gen="Xcode"
-	_driver="xcodebuild"
+	_compile="xcodebuild -configuration Release build"
+	_install="xcodebuild -configuration Release install"
 else
 	echo "Error: unknown operating system $_op_sys" >&2
 	exit 1
@@ -187,7 +189,7 @@ rm -rf build 2>/dev/null || sudo rm -rf build
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX:PATH="$_exec_dir" .. -G "$_cmake_gen"
-$_driver
+$_compile
 
 
 echo ""
@@ -211,7 +213,7 @@ echo "###########################################################"
 echo "###########################################################"
 echo ""
 
-make install
+$_install
 
 
 echo ""
