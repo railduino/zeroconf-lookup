@@ -114,7 +114,7 @@ func installManifests() {
 	}
 
 	////////////////////////// Config //////////////////////////
-	if *settime != 2 {
+	if *waiting != 2 {
 		// TODO write config file
 	}
 

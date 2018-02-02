@@ -32,7 +32,7 @@ endif
 
 all: zeroconf_lookup
 
-zeroconf_lookup: main.go
+zeroconf_lookup: avahi.go dnssd.go install.go main.go query.go
 	go build -o $@
 
 .PHONY: update clean tags uninstall

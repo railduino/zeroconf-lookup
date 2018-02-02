@@ -11,8 +11,8 @@ func collectWithAvahi(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	lines := strings.Split(string(out), "\n")
 
+	lines := strings.Split(string(out), "\n")
 	for _, line := range lines {
 		fields := strings.Split(line, ";")
 		if len(fields) < 9 || fields[0] != "=" {

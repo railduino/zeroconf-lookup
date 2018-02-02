@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,7 +18,7 @@ import (
 )
 
 const (
-	version = "2.0.1"
+	version = "2.1.0"
 	chrome  = "anjclddigfkhclmgopnjmmpfllfbhfea"
 	mozilla = "zeroconf_lookup@railduino.com"
 )
@@ -51,9 +50,10 @@ var (
 	install   = flag.Bool(  "i", false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
 	extension = flag.String("m", mozilla, "Setup Mozilla allowed_extensions (with -i)")
 	readable  = flag.Bool(  "r", false,   "Use human readable i/o size")
-	settime   = flag.Int(   "t", 2,       "Setup server collect timeout (with -i)")
+	testing   = flag.Bool(  "t", false,   "Enable testing mode")
 	uninstall = flag.Bool(  "u", false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
 	verbose   = flag.Bool(  "v", false,   "Output diagnostic messages")
+	waiting   = flag.Int(   "w", 2,       "Setup server collect timeout (with -i)")
 )
 
 func main() {
@@ -69,13 +69,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	logfile := filepath.Join(os.TempDir(), myName + ".log")
-	f, err := os.OpenFile(logfile, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
 	log.SetPrefix(myName + ": ")
 
 	viper.SetConfigName(myName)
@@ -97,12 +90,15 @@ func main() {
 	timeout = viper.GetInt("timeout")
 
 	if *verbose {
-		fmt.Printf("Logfile is: %s\n", logfile)
-
 		log.Printf("version .........: %s", version)
 		log.Printf("readable ........: %v", *readable)
 		log.Printf("verbose .........: %v", *verbose)
 		log.Printf("timeout .........: %d", timeout)
+		log.Printf("testing .........: %v", *testing)
+	}
+
+	if *testing {
+		*readable = true
 	}
 
 	if *readable == false {
@@ -211,13 +207,13 @@ func addServer(name, target, a string, port int, txt []string) {
 func collectData() (string, error) {
 	log.Println("start collecting")
 
-	if path, err := exec.LookPath("avahi-browse"); err == nil {
-		return collectWithAvahi(path)
-	}
-
-	if path, err := exec.LookPath("dns-sd"); err == nil {
+	if path, err := exec.LookPath("dns-sd"); err == nil || *testing == true {
 		return collectWithDnssd(path)
 	}
+
+	//if path, err := exec.LookPath("avahi-browse"); err == nil {
+		//return collectWithAvahi(path)
+	//}
 
 	return collectWithQuery()
 }
