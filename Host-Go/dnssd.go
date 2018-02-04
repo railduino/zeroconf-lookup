@@ -60,6 +60,7 @@ func collectWithDnssd(path string) (string, error) {
 			dnsRec := dnsRecord{ name: fields[1], port: port, target: fields[3] }
 			//fmt.Printf("SRV: %+v\n", dnsRec)
 			dnsList = append(dnsList, dnsRec)
+			continue
 		}
 
 		if fields := reTxt.FindStringSubmatch(line); fields != nil {
