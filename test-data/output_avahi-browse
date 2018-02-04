@@ -1,0 +1,14 @@
++;wlp3s0;IPv6;Railduino;Web-Angebot;local
++;wlp3s0;IPv4;Railduino;Web-Angebot;local
++;enp0s25;IPv6;Railduino;Web-Angebot;local
++;enp0s25;IPv4;LG-NAS-N1A1;Web-Angebot;local
++;enp0s25;IPv4;Brother\032HL-3070CW\032series;Web-Angebot;local
++;enp0s25;IPv4;DIGITUS;Web-Angebot;local
++;enp0s25;IPv4;Railduino;Web-Angebot;local
+=;wlp3s0;IPv6;Railduino;Web-Angebot;local;T430v.local;192.168.1.142;33221;"(T430v)" "Modellbahn"
+=;wlp3s0;IPv4;Railduino;Web-Angebot;local;T430v.local;192.168.1.142;33221;"(T430v)" "Modellbahn"
+=;enp0s25;IPv6;Railduino;Web-Angebot;local;T430v.local;192.168.1.142;33221;"(T430v)" "Modellbahn"
+=;enp0s25;IPv4;LG-NAS-N1A1;Web-Angebot;local;LG-NAS-N1A1.local;192.168.1.21;80;
+=;enp0s25;IPv4;Brother\032HL-3070CW\032series;Web-Angebot;local;dhcppc0.local;192.168.1.11;80;
+=;enp0s25;IPv4;DIGITUS;Web-Angebot;local;127.local;192.168.1.22;3689;"Database ID=beddab1edeadbea7"
+=;enp0s25;IPv4;Railduino;Web-Angebot;local;T430v.local;192.168.1.142;33221;"(T430v)" "Modellbahn"
