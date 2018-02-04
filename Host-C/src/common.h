@@ -41,6 +41,9 @@
 #if defined(HAVE_WS2TCPIP_H)
 #  include <ws2tcpip.h>
 #endif
+#if defined(HAVE_IO_H)
+#  include <io.h>
+#endif
 
 #if defined(HAVE_STDIO_H)
 #  include <stdio.h>

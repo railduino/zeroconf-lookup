@@ -51,15 +51,16 @@ set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 #
 ###########################################################
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
   add_definitions (-W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror)
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+elseif (${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
   set (warnings "/W4 /WX /EHsc")
 endif ()
 
 include (CheckIncludeFile)
 check_include_file ("winsock2.h"    HAVE_WINSOCK2_H)
 check_include_file ("ws2tcpip.h"    HAVE_WS2TCPIP_H)
+check_include_file ("io.h"          HAVE_IO_H)
 
 check_include_file ("stdio.h"       HAVE_STDIO_H)
 check_include_file ("stddef.h"      HAVE_STDDEF_H)
@@ -85,6 +86,13 @@ check_include_file ("netinet/in.h"  HAVE_NETINET_IN_H)
 check_include_file ("arpa/inet.h"   HAVE_ARPA_INET_H)
 
 check_include_file ("mach-o/dyld.h" HAVE_MACH_O_DYLD_H)
+
+include (CheckSymbolExists)
+check_symbol_exists (WSAStartup  "winsock2.h" HAVE_WSASTARTUP)
+check_symbol_exists (getopt_long "getopt.h"   HAVE_GETOPT_LONG)
+check_symbol_exists (_setmode    "io.h"       HAVE_SETMODE)
+check_symbol_exists (strncpy_s   "string.h"   HAVE_STRNCPY_S)
+check_symbol_exists (alarm       "signal.h;unistd.h" HAVE_ALARM)
 
 file (GLOB SOURCES "src/*.c")
 include_directories (${CMAKE_BINARY_DIR})
