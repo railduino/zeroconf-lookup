@@ -181,8 +181,10 @@ func readCommand(input io.Reader) error {
 }
 
 func addServer(name, target, a string, port int, txt []string) {
+	name = strings.Replace(name, "\\032", " ", -1)
+	name = strings.Replace(name, "\\ ",   " ", -1)
 	newSrv := server{
-		Name:   strings.Replace(name, "\\032", " ", -1),
+		Name:   name,
 		Txt:    txt,
 		Target: target,
 		Port:   port,
