@@ -7,7 +7,7 @@ import (
 )
 
 func collectWithAvahi(path string) (string, error) {
-	out, err := exec.Command(path, "-t", "-r", "-p", "_http._tcp").Output()
+	out, err := exec.Command(path, "-t", "-r", "-p", svcType).Output()
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +38,8 @@ func collectWithAvahi(path string) (string, error) {
 			list := strings.Split(fields[9], `" "`)
 			for _, elem := range list {
 				elem = strings.Trim(elem, `"`)
-				elem = strings.Replace(elem, "\\032", " ", -1)
+				elem = strings.Replace(elem, `\032`, " ", -1)
+				elem = strings.Replace(elem, `\ `,   " ", -1)
 				if elem != "" {
 					txt = append(txt, elem)
 				}

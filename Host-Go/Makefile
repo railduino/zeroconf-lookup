@@ -38,6 +38,7 @@ zeroconf_lookup: avahi.go dnssd.go install.go main.go query.go
 .PHONY: update clean tags uninstall
 
 update:
+	go get -u golang.org/x/sys/windows/registry
 	go get -u github.com/google/go-cmp/cmp
 	go get -u github.com/grandcat/zeroconf
 	go get -u github.com/spf13/viper

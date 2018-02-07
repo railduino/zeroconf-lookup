@@ -19,8 +19,10 @@ import (
 
 const (
 	version = "2.1.0"
+	svcType = "_http._tcp"
 	chrome  = "anjclddigfkhclmgopnjmmpfllfbhfea"
 	mozilla = "zeroconf_lookup@railduino.com"
+	timeDef = 1
 )
 
 type command struct {
@@ -45,7 +47,7 @@ type output struct {
 var (
 	myName    = "zeroconf_lookup"
 	srvList   = []server{}
-	timeout   = 2
+	timeout   = 1
 	origin    = flag.String("c", chrome,  "Setup Chrome allowed_origins (with -i)")
 	install   = flag.Bool(  "i", false,   "Install Mozilla/Chrome manifests (sudo for system wide)")
 	extension = flag.String("m", mozilla, "Setup Mozilla allowed_extensions (with -i)")
@@ -53,7 +55,7 @@ var (
 	testing   = flag.Bool(  "t", false,   "Enable testing mode")
 	uninstall = flag.Bool(  "u", false,   "Uninstall Mozilla/Chrome manifests (sudo for system wide)")
 	verbose   = flag.Bool(  "v", false,   "Output diagnostic messages")
-	waiting   = flag.Int(   "w", 2,       "Setup server collect timeout (with -i)")
+	waiting   = flag.Int(   "w", timeDef, "Setup server collect timeout (with -i)")
 )
 
 func main() {
@@ -78,7 +80,7 @@ func main() {
 	viper.SetEnvPrefix(myName)
 	viper.AutomaticEnv()
 
-	viper.SetDefault("timeout", 2)
+	viper.SetDefault("timeout", timeDef)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if strings.Contains(err.Error(), "Not Found") == false {
@@ -181,8 +183,8 @@ func readCommand(input io.Reader) error {
 }
 
 func addServer(name, target, a string, port int, txt []string) {
-	name = strings.Replace(name, "\\032", " ", -1)
-	name = strings.Replace(name, "\\ ",   " ", -1)
+	name = strings.Replace(name, `\032`, " ", -1)
+	name = strings.Replace(name, `\ `,   " ", -1)
 	newSrv := server{
 		Name:   name,
 		Txt:    txt,
@@ -213,9 +215,9 @@ func collectData() (string, error) {
 		return collectWithDnssd(path)
 	}
 
-	//if path, err := exec.LookPath("avahi-browse"); err == nil {
-		//return collectWithAvahi(path)
-	//}
+	if path, err := exec.LookPath("avahi-browse"); err == nil {
+		return collectWithAvahi(path)
+	}
 
 	return collectWithQuery()
 }

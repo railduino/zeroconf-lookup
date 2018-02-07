@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	//"golang.org/x/sys/windows/registry"
 )
 
 const (
@@ -76,6 +78,12 @@ func installManifests() {
 		} else {
 			writeManifest(appleMozillaUser, content)
 		}
+	//} else if runtime.GOOS == "windows" {
+	//	k, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Mozilla\NativeMessagingHosts\` + manifestName, registry.SET_VALUE)
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	defer k.Close()
 	} else {
 		log.Fatal("sorry -- OS not yet implemented: " + runtime.GOOS)
 	}
