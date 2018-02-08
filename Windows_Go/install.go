@@ -59,7 +59,6 @@ func installManifests() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(string(content))
 	writeRegistry(hostPath, "chrome", "Google\\Chrome", content)
 }
 
@@ -85,4 +84,5 @@ func writeRegistry(executable, basename, browser string, content []byte) {
 }
 
 func uninstallManifests() {
+	// TODO
 }

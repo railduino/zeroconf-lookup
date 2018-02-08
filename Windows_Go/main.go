@@ -32,12 +32,12 @@ type command struct {
 }
 
 type server struct {
-	Name   string   `json:"name"`
-	Txt    []string `json:"txt"`
-	Target string   `json:"target"`
-	Port   int      `json:"port"`
-	A      string   `json:"a"`
-	URL    string   `json:"url"`
+	Name    string   `json:"name"`
+	Txt     []string `json:"txt"`
+	Target  string   `json:"target"`
+	Port    int      `json:"port"`
+	A       string   `json:"a"`
+	URL     string   `json:"url"`
 }
 
 type output struct {
@@ -174,7 +174,7 @@ func collectData() (string, error) {
 	}
 
 	path, err := exec.LookPath("dns-sd")
-	if err == nil || *force == "dns-sd" {
+	if err == nil {
 		return collectDnssd(path)
 	}
 
@@ -183,7 +183,7 @@ func collectData() (string, error) {
 
 func addServer(name, target, a string, port int, txt []string) {
 	name = strings.Replace(name, `\032`, " ", -1)
-	name = strings.Replace(name, `\ `, " ", -1)
+	name = strings.Replace(name, `\ `,   " ", -1)
 	newSrv := server{
 		Name:   name,
 		Txt:    txt,

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
 #
@@ -22,32 +23,33 @@
 # SOFTWARE.
 #
 
-HDRS := $(wildcard *.h)
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
-UID  := $(shell id -u)
+set -e
 
-CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+make
 
-all: zeroconf_lookup
+if [[ $1 == "install" ]] ; then
+	if [[ $(id -u) -eq 0 ]] ; then
+		mkdir -v -p /usr/local/bin
+		install -v zeroconf_lookup /usr/local/bin
+		/usr/local/bin/zeroconf_lookup -i
+	else
+		mkdir -v -p ~/bin
+		install -v zeroconf_lookup ~/bin
+		~/bin/zeroconf_lookup -i
+	fi
+	exit 0
+fi
 
-zeroconf_lookup: $(OBJS)
-	ctags *.[ch]
-	gcc $(CFLAGS) -o $@ $^ -lavahi-client -lavahi-common
+if [[ $1 == "uninstall" ]] ; then
+	./zeroconf_lookup -u
+	if [[ $(id -u) -eq 0 ]] ; then
+		rm -v -f /usr/local/bin/zeroconf_lookup
+	else
+		rm -v -f ~/bin/zeroconf_lookup
+	fi
+	exit 0
+fi
 
-%.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-.PHONY: clean tags
-
-clean:
-	rm -f zeroconf_lookup *.o tags
-
-tags:
-	ctags *.[ch]
-
-install: zeroconf_lookup
-	./setup.sh install
-
-uninstall: zeroconf_lookup
-	./setup.sh uninstall
+echo "Usage: $0 install|uninstall" >&2
+exit 1
 

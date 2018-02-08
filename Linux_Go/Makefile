@@ -22,28 +22,25 @@
 # SOFTWARE.
 #
 
-HDRS := $(wildcard *.h)
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
-UID  := $(shell id -u)
-
-CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+SRCS := $(wildcard *.go)
 
 all: zeroconf_lookup
 
-zeroconf_lookup: $(OBJS)
-	ctags *.[ch]
-	gcc $(CFLAGS) -o $@ $^ -lavahi-client -lavahi-common
+zeroconf_lookup: $(SRCS)
+	ctags *.go
+	go build -o $@
 
-%.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+.PHONY: update clean tags
 
-.PHONY: clean tags
+update:
+	go get -u github.com/google/go-cmp/cmp
+	go get -u github.com/grandcat/zeroconf
 
 clean:
-	rm -f zeroconf_lookup *.o tags
+	rm -f zeroconf_lookup tags
 
 tags:
-	ctags *.[ch]
+	ctags *.go
 
 install: zeroconf_lookup
 	./setup.sh install
