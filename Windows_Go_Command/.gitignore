@@ -1,0 +1,5 @@
+# Ignore vim swap files
+*.swp
+
+# Ignore manifest files
+*.json
