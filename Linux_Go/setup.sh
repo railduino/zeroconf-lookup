@@ -25,8 +25,6 @@
 
 set -e
 
-make
-
 if [[ $1 == "install" ]] ; then
 	if [[ $(id -u) -eq 0 ]] ; then
 		mkdir -v -p /usr/local/bin
