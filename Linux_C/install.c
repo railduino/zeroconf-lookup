@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "common.h"
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,12 +46,6 @@ static char *my_description      = "Find HTTP Servers in the .local domain using
 static char *my_destdir = NULL;
 static char  my_virt_exec[FILENAME_MAX];
 static char  my_real_exec[FILENAME_MAX];
-#if 0
-static char  my_virt_conf[FILENAME_MAX];
-static char  my_real_conf[FILENAME_MAX];
-static char  my_virt_json[FILENAME_MAX];
-static char  my_real_json[FILENAME_MAX];
-#endif
 
 
 static void
@@ -128,20 +123,16 @@ install_add_manifest(char *path)
 	fprintf(fp, "}\n");
 	fclose(fp);
 
-	if (my_destdir != NULL) {
-		size_t len = strlen(my_destdir);
-		util_info("created (%.*s) %s", len, filename, filename + len);
-	} else {
-		util_info("created %s", filename);
-	}
+	util_info("created manifest %s", filename);
 }
 
 
 void
 install_install(char *prog)
 {
-	char env_path[FILENAME_MAX], *ptr;
+	char filename[FILENAME_MAX], *ptr;
 	struct stat sb;
+	FILE *fp;
 
 	if (prog == NULL) {
 		util_fatal("can't determine my own executable");
@@ -173,8 +164,8 @@ install_install(char *prog)
 		}
 		UTIL_STRCPY(my_virt_exec, my_real_exec);
 	} else {
-		UTIL_STRCPY(env_path, getenv("PATH"));
-		for (ptr = strtok(env_path, ":"); ptr != NULL; ptr = strtok(NULL, ":")) {
+		UTIL_STRCPY(filename, getenv("PATH"));
+		for (ptr = strtok(filename, ":"); ptr != NULL; ptr = strtok(NULL, ":")) {
 			UTIL_STRCPY(my_real_exec, ptr);
 			UTIL_STRCAT(my_real_exec, "/");
 			UTIL_STRCAT(my_real_exec, prog);
@@ -191,12 +182,7 @@ install_install(char *prog)
 	if (access(my_real_exec, X_OK) == -1) {
 		util_fatal("can't access my own executable");
 	}
-
-	if (my_destdir != NULL) {
-		util_info("executable is located at (%s) /%s", my_destdir, my_virt_exec);
-	} else {
-		util_info("executable is located at %s", my_real_exec);
-	}
+	util_info("executable is located at %s", my_real_exec);
 
 	if (getuid() == 0) {
 		install_add_manifest(dir_mozilla_system);
@@ -207,6 +193,27 @@ install_install(char *prog)
 		install_add_manifest(dir_chrome_user);
 		install_add_manifest(dir_chromium_user);
 	}
+
+	if (my_destdir != NULL) {
+		UTIL_STRCPY(filename, my_destdir);
+		UTIL_STRCAT(filename, CONFIG_FILE);
+	} else {
+		UTIL_STRCPY(filename, CONFIG_FILE);
+	}
+	if ((fp = fopen(filename, "w")) == NULL) {
+		util_fatal("can't create %s (%s)", filename, strerror(errno));
+	}
+	fprintf(fp, "#\n");
+	fprintf(fp, "# Configuration for zeroconf_lookup\n");
+	fprintf(fp, "# See: https://www.railduino.de/zeroconf-lookup\n");
+	fprintf(fp, "#\n");
+	fprintf(fp, "#google=%s\n",  config_get_google());
+	fprintf(fp, "#mozilla=%s\n", config_get_mozilla());
+	fprintf(fp, "#timeout=%d\n", config_get_timeout());
+	fprintf(fp, "#force=%s\n",   config_get_force());
+	fprintf(fp, "\n");
+	fclose(fp);
+	util_info("created cfg-file %s", filename);
 }
 
 

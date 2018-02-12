@@ -120,10 +120,10 @@ config_set_force(char *val, char *auth)
 }
 
 
-int
+char *
 config_get_force(void)
 {
-	return my_force[0];
+	return my_force;
 }
 
 

@@ -66,7 +66,7 @@ main_usage(char *name, int retval)
 	fprintf(fp, "Railduino zeroconf_lookup Version %s\n", VERSION);
 	fprintf(fp, "Usage: %s [options ...]\n", name);
 	fprintf(fp, "      -f|--force=<avahi|query>   Enforce query method\n");
-	fprintf(fp, "                                     Default: use avahi if available, else query\n");
+	fprintf(fp, "                                     Default: empty (use avahi if available, else query)\n");
 	fprintf(fp, "      -g|--google=<tag>          Change Google Chrome/Chromium allowed_origins\n");
 	fprintf(fp, "                                     Default: %s\n", GOOGLE_TAG);
 	fprintf(fp, "      -h|--help                  Display this usage information and exit\n");
@@ -75,7 +75,8 @@ main_usage(char *name, int retval)
 	fprintf(fp, "                                     Default: %s\n", MOZILLA_TAG);
 	fprintf(fp, "      -q|--quiet                 Do not write logfile (%s)\n", LOG_FILE);
 	fprintf(fp, "      -r|--readable              Use human readable length for output\n");
-	fprintf(fp, "      -t|--timeout=<num>         Set query timeout (default: %s sec)\n", TIME_OUT);
+	fprintf(fp, "      -t|--timeout=<num>         Set query timeout\n");
+	fprintf(fp, "                                     Default: %s sec)\n", TIME_OUT);
 	fprintf(fp, "      -u|--uninstall             Uninstall Firefox/Chrome manifests (sudo for system wide)\n");
 	fprintf(fp, "      -v|--verbose               Increase verbosity level\n");
 	fprintf(fp, "\n");
@@ -261,11 +262,11 @@ main(int argc, char *argv[])
 		main_receive_input();
 	}
 
-	if (config_get_force() == 'a') {
+	if (strcmp(config_get_force(), "avahi") == 0) {
 		main_send_result(avahi, readable, avahi_browse());
 		exit(EXIT_SUCCESS);
 	}
-	if (config_get_force() == 'q') {
+	if (strcmp(config_get_force(), "query") == 0) {
 		main_send_result(query, readable, query_browse());
 		exit(EXIT_SUCCESS);
 	}

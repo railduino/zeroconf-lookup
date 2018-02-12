@@ -1,9 +1,9 @@
 #
 # Generated file - do not edit; run ./configure
 #
-bindir=/usr/local/bin
-sysconfdir=/usr/local/etc
+bindir=/usr/bin
+sysconfdir=/etc
 google=anjclddigfkhclmgopnjmmpfllfbhfea
 mozilla=zeroconf_lookup@railduino.com
 timeout=1
-force=avahi
+force=

@@ -64,7 +64,7 @@ void  config_read(char *google, char *mozilla, char *timeout, char *force);
 char *config_get_google(void);
 char *config_get_mozilla(void);
 int   config_get_timeout(void);
-int   config_get_force(void);
+char *config_get_force(void);
 
 
 // Prototypes for avahi.c
