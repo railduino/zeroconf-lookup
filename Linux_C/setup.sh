@@ -3,6 +3,8 @@
 # Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
 #
 # This file is part of Zeroconf-Lookup.
+# Project home: https://www.railduino.de/zeroconf-lookup
+# Source code:  https://github.com/railduino/zeroconf-lookup.git
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,27 +27,28 @@
 
 set -e
 
-make
+source ./variables
 
 if [[ $1 == "install" ]] ; then
-	if [[ $(id -u) -eq 0 ]] ; then
-		mkdir -v -p /usr/local/bin
-		install -v zeroconf_lookup /usr/local/bin
-		/usr/local/bin/zeroconf_lookup -i
-	else
-		mkdir -v -p ~/bin
-		install -v zeroconf_lookup ~/bin
-		~/bin/zeroconf_lookup -i
+	if [[ -n $DESTDIR ]] ; then
+		while [[ $DESTDIR =~ /$ ]] ; do
+			DESTDIR=${DESTDIR%/}
+		done
+		echo "[setup] DESTDIR = $DESTDIR"
+		bindir=$(echo "$DESTDIR/$bindir" | sed -e 's#//*#/#g')
+		sysconfdir=$(echo "$DESTDIR/$sysconfdir" | sed -e 's#//*#/#g')
 	fi
+	mkdir -v -p "$bindir"
+	install -v zeroconf_lookup "$bindir"
+	mkdir -v -p "$sysconfdir"
+	"$bindir/zeroconf_lookup" -i
 	exit 0
 fi
 
 if [[ $1 == "uninstall" ]] ; then
 	./zeroconf_lookup -u
-	if [[ $(id -u) -eq 0 ]] ; then
-		rm -v -f /usr/local/bin/zeroconf_lookup
-	else
-		rm -v -f ~/bin/zeroconf_lookup
+	if [[ -x "$bindir/zeroconf_lookup" ]] ; then
+		rm -f -v "$bindir/zeroconf_lookup"
 	fi
 	exit 0
 fi

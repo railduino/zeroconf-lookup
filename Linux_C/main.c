@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
+ * Project home: https://www.railduino.de/zeroconf-lookup
+ * Source code:  https://github.com/railduino/zeroconf-lookup.git
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,24 +26,26 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
+#include "common.h"
+#include "config.h"
+
 #include <getopt.h>
 #include <poll.h>
 
-#include "common.h"
+
+#define VERSION		"2.3.1"
+#define LOG_FILE	"/tmp/zeroconf_lookup.log"
 
 
 static struct option long_options[] = {
-	{ "chrome",    required_argument, NULL, 'c' },
+	{ "force",     required_argument, NULL, 'f' },
+	{ "google",    required_argument, NULL, 'g' },
 	{ "help",      no_argument,       NULL, 'h' },
 	{ "install",   no_argument,       NULL, 'i' },
 	{ "mozilla",   required_argument, NULL, 'm' },
+	{ "quiet",     no_argument,       NULL, 'q' },
 	{ "readable",  no_argument,       NULL, 'r' },
+	{ "timeout",   required_argument, NULL, 't' },
 	{ "uninstall", no_argument,       NULL, 'u' },
 	{ "verbose",   no_argument,       NULL, 'v' },
 	{ NULL, 0, NULL, 0 }
@@ -54,28 +58,34 @@ static size_t   my_input_offset;
 
 
 static void
-usage(char *name, int retval)
+main_usage(char *name, int retval)
 {
 	FILE *fp = (retval == EXIT_SUCCESS ? stdout : stderr);
 
+	fprintf(fp, "\n");
 	fprintf(fp, "Railduino zeroconf_lookup Version %s\n", VERSION);
 	fprintf(fp, "Usage: %s [options ...]\n", name);
-	fprintf(fp, "      -c|--chrome=<str>    Install Chrome allowed_origins (with -i)\n");
-	fprintf(fp, "                              Default: %s\n", CHROME_TAG);
-	fprintf(fp, "      -h|--help            Display usage and exit\n");
-	fprintf(fp, "      -i|--install         Install Mozilla/Chrome manifests (sudo for system wide)\n");
-	fprintf(fp, "      -m|--mozilla=<str>   Install Mozilla allowed_extensions (with -i)\n");
-	fprintf(fp, "                              Default: %s\n", MOZILLA_TAG);
-	fprintf(fp, "      -r|--readable        Use human readable length\n");
-	fprintf(fp, "      -u|--uninstall       Uninstall Mozilla/Chrome manifests (sudo for system wide)\n");
-	fprintf(fp, "      -v|--verbose         Increase verbosity level\n");
+	fprintf(fp, "      -f|--force=<avahi|query>   Enforce query method\n");
+	fprintf(fp, "                                     Default: use avahi if available, else query\n");
+	fprintf(fp, "      -g|--google=<tag>          Change Google Chrome/Chromium allowed_origins\n");
+	fprintf(fp, "                                     Default: %s\n", GOOGLE_TAG);
+	fprintf(fp, "      -h|--help                  Display this usage information and exit\n");
+	fprintf(fp, "      -i|--install               Install Firefox/Chrome manifests (sudo for system wide)\n");
+	fprintf(fp, "      -m|--mozilla=<tag>         Change Mozilla Firefox allowed_extensions\n");
+	fprintf(fp, "                                     Default: %s\n", MOZILLA_TAG);
+	fprintf(fp, "      -q|--quiet                 Do not write logfile (%s)\n", LOG_FILE);
+	fprintf(fp, "      -r|--readable              Use human readable length for output\n");
+	fprintf(fp, "      -t|--timeout=<num>         Set query timeout (default: %s sec)\n", TIME_OUT);
+	fprintf(fp, "      -u|--uninstall             Uninstall Firefox/Chrome manifests (sudo for system wide)\n");
+	fprintf(fp, "      -v|--verbose               Increase verbosity level\n");
+	fprintf(fp, "\n");
 
 	exit(retval);
 }
 
 
 static int
-handle_input_byte(char chr)
+main_input_byte(char chr)
 {
 	if (my_length_offset < sizeof(my_length.as_uint)) {
 		util_debug(1, "got length byte %d = %02x", my_length_offset, (int) chr & 0xff);
@@ -86,7 +96,7 @@ handle_input_byte(char chr)
 	}
 
 	if (my_length.as_uint >= sizeof(my_input)) {
-		util_error("length %u bigger than buffer size %u",
+		util_error(__func__, __LINE__, "length %u bigger than buffer size %u",
 				my_length.as_uint, sizeof(my_input));
 		my_length_offset = 0;
 		return 0;
@@ -112,9 +122,9 @@ handle_input_byte(char chr)
 
 
 static void
-receive_input(void)
+main_receive_input(void)
 {
-	util_debug(1, "awaiting input (poll)");
+	util_debug(1, "awaiting input (poll), 5 sec max");
 	for (;;) {
 		struct pollfd fds[1];
 		int ret;
@@ -131,7 +141,7 @@ receive_input(void)
 
 		if (fds[0].revents & POLLIN) {
 			read(fileno(stdin), &temp, 1);
-			if (handle_input_byte(temp) == 1) {
+			if (main_input_byte(temp) == 1) {
 				return;
 			}
 		}
@@ -140,7 +150,7 @@ receive_input(void)
 
 
 static void
-send_result(char *source, int readable, result_t *result)
+main_send_result(char *source, int readable, result_t *result)
 {
 	char prolog[1024], *epilog;
 	length_t length;
@@ -181,30 +191,43 @@ send_result(char *source, int readable, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, readable, do_inst, do_uninst;
+	static char *avahi = "Avahi (C)", *query = "Query (C)";
+	static char google[256], mozilla[256], timeout[32], force[32];
+	int c, quiet, readable, do_inst, do_uninst;
+	result_t *result;
 
-	for (readable = do_inst = do_uninst = 0; ; ) {
-		c = getopt_long(argc, argv, "c:h?im:ruv", long_options, NULL);
+	quiet = readable = do_inst = do_uninst = 0;
+	for (;;) {
+		c = getopt_long(argc, argv, "f:g:h?im:qrt:uv", long_options, NULL);
 		if (c < 0) {
 			break;
 		}
 
 		switch (c) {
-			case 'c':
-				install_set_chrome(optarg);
+			case 'f':
+				UTIL_STRCPY(force, optarg);
+				break;
+			case 'g':
+				UTIL_STRCPY(google, optarg);
 				break;
 			case 'h':
 			case '?':
-				usage(argv[0], EXIT_SUCCESS);
+				main_usage(argv[0], EXIT_SUCCESS);
 				break;
 			case 'i':
 				do_inst = 1;
 				break;
 			case 'm':
-				install_set_mozilla(optarg);
+				UTIL_STRCPY(mozilla, optarg);
+				break;
+			case 'q':
+				quiet = 1;
 				break;
 			case 'r':
 				readable = 1;
+				break;
+			case 't':
+				UTIL_STRCPY(timeout, optarg);
 				break;
 			case 'u':
 				do_uninst = 1;
@@ -213,10 +236,16 @@ main(int argc, char *argv[])
 				util_inc_verbose();
 				break;
 			default:
-				usage(argv[0], EXIT_FAILURE);
+				main_usage(argv[0], EXIT_FAILURE);
 				break;
 		}
 	}
+
+	if (quiet == 0 && do_inst == 0 && do_uninst == 0) {
+		util_open_logfile(LOG_FILE);
+	}
+
+	config_read(google, mozilla, timeout, force);
 
 	if (do_inst == 1 || do_uninst == 1) {
 		if (do_uninst == 1) {
@@ -228,15 +257,29 @@ main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	util_open_logfile("/tmp/zeroconf_lookup.log");
-
 	if (readable == 0) {
-		receive_input();
+		main_receive_input();
 	}
 
-	util_debug(1, "ready for browsing");
-	send_result("Avahi (C)", readable, avahi_browse());
+	if (config_get_force() == 'a') {
+		main_send_result(avahi, readable, avahi_browse());
+		exit(EXIT_SUCCESS);
+	}
+	if (config_get_force() == 'q') {
+		main_send_result(query, readable, query_browse());
+		exit(EXIT_SUCCESS);
+	}
 
+	if ((result = avahi_browse()) != NULL) {
+		main_send_result(avahi, readable, result);
+		exit(EXIT_SUCCESS);
+	}
+	if ((result = query_browse()) != NULL) {
+		main_send_result(query, readable, result);
+		exit(EXIT_SUCCESS);
+	}
+
+	main_send_result(avahi, readable, NULL);
 	exit(EXIT_SUCCESS);
 }
 

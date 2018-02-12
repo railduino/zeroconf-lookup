@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
+ * Project home: https://www.railduino.de/zeroconf-lookup
+ * Source code:  https://github.com/railduino/zeroconf-lookup.git
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +26,13 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
 #include <avahi-common/simple-watch.h>
 #include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
-
-#include "common.h"
 
 
 static result_t *my_results = NULL;
@@ -94,7 +92,8 @@ avahi_resolve_callback(AvahiServiceResolver *r,
 	result_t *result;
 
 	if (event == AVAHI_RESOLVER_FAILURE) {
-		util_error("avahi_resolve_callback() error %s", avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))));
+		util_error(__func__, __LINE__, "avahi_resolve_callback() error %s",
+				avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))));
 		avahi_service_resolver_free(r);
 		return;
 	}
@@ -193,7 +192,8 @@ avahi_browse_callback(AvahiServiceBrowser *b,
 	AvahiClient *c = userdata;
 
 	if (event == AVAHI_BROWSER_FAILURE) {
-		util_error("avahi_browse_callback() error %s", avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))));
+		util_error(__func__, __LINE__, "avahi_browse_callback() error %s",
+				avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))));
 		avahi_simple_poll_quit(my_poll);
 		return;
 	}
@@ -201,7 +201,8 @@ avahi_browse_callback(AvahiServiceBrowser *b,
 	if (event == AVAHI_BROWSER_NEW) {
 		if (avahi_service_resolver_new(c, interface, protocol, name, type, domain,
 				AVAHI_PROTO_UNSPEC, 0, avahi_resolve_callback, c) == NULL) {
-			util_error("avahi_browse_callback() error for %s: %s", name, avahi_strerror(avahi_client_errno(c)));
+			util_error(__func__, __LINE__, "avahi_browse_callback() error for %s: %s",
+					name, avahi_strerror(avahi_client_errno(c)));
 		}
 		util_debug(3, "avahi_browse_callback() event: AVAHI_BROWSER_NEW");
 		return;
@@ -222,7 +223,8 @@ avahi_client_callback(AvahiClient *c,
 		AVAHI_GCC_UNUSED void *userdata)
 {
 	if (state == AVAHI_CLIENT_FAILURE) {
-		util_error("avahi_client_callback() error %s", avahi_strerror(avahi_client_errno(c)));
+		util_error(__func__, __LINE__, "avahi_client_callback() error %s",
+				avahi_strerror(avahi_client_errno(c)));
 		avahi_simple_poll_quit(my_poll);
 	}
 
@@ -240,14 +242,14 @@ avahi_browse(void)
 
 	my_poll = avahi_simple_poll_new();
 	if (my_poll == NULL) {
-		util_error("avahi_simple_poll_new() failed");
+		util_error(__func__, __LINE__, "avahi_simple_poll_new() failed");
 		return NULL;
 	}
 	util_debug(3, "success: avahi_simple_poll_new()");
 
 	my_client = avahi_client_new(avahi_simple_poll_get(my_poll), 0, avahi_client_callback, NULL, &error);
 	if (my_client == NULL) {
-		util_error("avahi_client_new() error %s", avahi_strerror(error));
+		util_error(__func__, __LINE__, "avahi_client_new() error %s", avahi_strerror(error));
 		return NULL;
 	}
 	util_debug(3, "success: avahi_client_new()");

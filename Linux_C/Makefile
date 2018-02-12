@@ -2,6 +2,8 @@
 # Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
 #
 # This file is part of Zeroconf-Lookup.
+# Project home: https://www.railduino.de/zeroconf-lookup
+# Source code:  https://github.com/railduino/zeroconf-lookup.git
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +26,20 @@
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
-UID  := $(shell id -u)
 
-CFLAGS += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+CFLAGS  += -W -Wall -Wextra -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Winline -Werror
+LDFLAGS += -lavahi-client -lavahi-common
 
 all: zeroconf_lookup
 
 zeroconf_lookup: $(OBJS)
 	ctags *.[ch]
-	gcc $(CFLAGS) -o $@ $^ -lavahi-client -lavahi-common
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: clean tags
+.PHONY: clean tags variables
 
 clean:
 	rm -f zeroconf_lookup *.o tags
@@ -45,9 +47,9 @@ clean:
 tags:
 	ctags *.[ch]
 
-install: zeroconf_lookup
+install: zeroconf_lookup variables
 	./setup.sh install
 
-uninstall: zeroconf_lookup
+uninstall: zeroconf_lookup variables
 	./setup.sh uninstall
 

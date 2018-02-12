@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
+ * Project home: https://www.railduino.de/zeroconf-lookup
+ * Source code:  https://github.com/railduino/zeroconf-lookup.git
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +26,13 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
-#include <errno.h>
-
 #include "common.h"
+
+#include <time.h>
 
 
 static int   my_verbose = 0;
-static FILE *my_logfile = NULL;
+static FILE *my_log_fp  = NULL;
 
 
 void *
@@ -135,7 +131,7 @@ util_strtrim(char *src, const char *trim)
 		return NULL;
 	}
 	if (trim == NULL) {
-		trim = " \t\n";
+		trim = " \t\n\r";
 	}
 
 	while (strlen(src) > 0 && strchr(trim, *src) != NULL) {
@@ -185,10 +181,10 @@ util_get_verbose(void)
 static void
 util_close_logfile(void)
 {
-	if (my_logfile != NULL) {
+	if (my_log_fp != NULL) {
 		util_info("touch-down");
-		fclose(my_logfile);
-		my_logfile = NULL;
+		fclose(my_log_fp);
+		my_log_fp = NULL;
 	}
 }
 
@@ -196,35 +192,22 @@ util_close_logfile(void)
 void
 util_open_logfile(char *logfile)
 {
-	if ((my_logfile = fopen(logfile, "w")) == NULL) {
+	if ((my_log_fp = fopen(logfile, "w")) == NULL) {
 		util_fatal("can't create logfile %s: %s", logfile, strerror(errno));
 	}
 	atexit(util_close_logfile);
 
-	util_info("take-off logging=%d", my_verbose);
+	util_info("take-off verbose=%d", my_verbose);
 }
 
 
 static void
-util_write_logfile(int tag, char *line)
+util_write_logfile(char *tag, char *line)
 {
 	time_t now = time(NULL);
-	char   *typ;
 
-	switch (tag) {
-		case 'D': typ = "DEBUG"; break;
-		case 'I': typ = "INFO "; break;
-		case 'W': typ = "WARN "; break;
-		case 'E': typ = "ERROR"; break;
-		case 'F': typ = "FATAL"; break;
-		default: return;
-	}
-
-	if (my_logfile != NULL) {
-		fprintf(my_logfile, "%.19s %s -- %s\n", ctime(&now), typ, line);
-		fflush(my_logfile);
-	} else {
-		fprintf(stderr, "%s\n", line);
+	if (my_log_fp != NULL) {
+		fprintf(my_log_fp, "%.19s %s -- %s\n", ctime(&now), tag, line);
 	}
 }
 
@@ -239,8 +222,15 @@ util_debug(int level, char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	if (level <= my_verbose) {
-		util_write_logfile('D', buffer);
+	if (level > my_verbose) {
+		return;
+	}
+
+	if (my_log_fp != NULL) {
+		time_t now = time(NULL);
+		fprintf(my_log_fp, "%.19s DEBUG -- %s\n", ctime(&now), buffer);
+	} else {
+		fprintf(stderr, "DEBUG - %s\n", buffer);
 	}
 }
 
@@ -255,35 +245,35 @@ util_info(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	util_write_logfile('I', buffer);
+	if (my_log_fp != NULL) {
+		time_t now = time(NULL);
+		fprintf(my_log_fp, "%.19s INFO  -- %s\n", ctime(&now), buffer);
+	} else {
+		fprintf(stderr, "INFO - %s\n", buffer);
+	}
 }
 
 
 void
-util_warn(char *fmt, ...)
+util_error(const char *func, int line, char *fmt, ...)
 {
 	char buffer[1000];
+	size_t ofs;
 	va_list ap;
 
-	va_start(ap, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, ap);
-	va_end(ap);
-
-	util_write_logfile('W', buffer);
-}
-
-
-void
-util_error(char *fmt, ...)
-{
-	char buffer[1000];
-	va_list ap;
+	snprintf(buffer, sizeof(buffer), ">>>%s:%d<<< ", func, line);
+	ofs = strlen(buffer);
 
 	va_start(ap, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, ap);
+	vsnprintf(buffer + ofs, sizeof(buffer) - ofs, fmt, ap);
 	va_end(ap);
 
-	util_write_logfile('E', buffer);
+	if (my_log_fp != NULL) {
+		time_t now = time(NULL);
+		fprintf(my_log_fp, "%.19s ERROR -- %s\n", ctime(&now), buffer);
+	} else {
+		fprintf(stderr, "ERROR - %s\n", buffer);
+	}
 }
 
 
@@ -297,7 +287,13 @@ util_fatal(char *fmt, ...)
 	vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	util_write_logfile('F', buffer);
+	util_write_logfile("FATAL", buffer);
+	if (my_log_fp != NULL) {
+		time_t now = time(NULL);
+		fprintf(my_log_fp, "%.19s ERROR -- %s\n", ctime(&now), buffer);
+	}
+	fprintf(stderr, "FATAL - %s\n", buffer);
+
 	exit(EXIT_FAILURE);
 }
 

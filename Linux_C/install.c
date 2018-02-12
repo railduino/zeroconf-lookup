@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
+ * Project home: https://www.railduino.de/zeroconf-lookup
+ * Source code:  https://github.com/railduino/zeroconf-lookup.git
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +26,10 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
+#include "common.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#include "common.h"
 
 
 static char *dir_mozilla_system  = "/usr/lib/mozilla/native-messaging-hosts";
@@ -43,24 +39,18 @@ static char *dir_mozilla_user    = "~/.mozilla/native-messaging-hosts";
 static char *dir_chrome_user     = "~/.config/google-chrome/NativeMessagingHosts";
 static char *dir_chromium_user   = "~/.config/chromium/NativeMessagingHosts";
 
-static char *my_chrome  = CHROME_TAG;
-static char *my_mozilla = MOZILLA_TAG;
+static char *my_tagline          = "com.railduino.zeroconf_lookup";
+static char *my_description      = "Find HTTP Servers in the .local domain using Zeroconf";
 
-static char my_executable[FILENAME_MAX];
-
-
-void
-install_set_chrome(char *str)
-{
-	my_chrome = str;
-}
-
-
-void
-install_set_mozilla(char *str)
-{
-	my_mozilla = str;
-}
+static char *my_destdir = NULL;
+static char  my_virt_exec[FILENAME_MAX];
+static char  my_real_exec[FILENAME_MAX];
+#if 0
+static char  my_virt_conf[FILENAME_MAX];
+static char  my_real_conf[FILENAME_MAX];
+static char  my_virt_json[FILENAME_MAX];
+static char  my_real_json[FILENAME_MAX];
+#endif
 
 
 static void
@@ -108,10 +98,15 @@ install_add_manifest(char *path)
 		UTIL_STRCPY(filename, getenv("HOME"));
 		UTIL_STRCAT(filename, path + 1);
 	} else {
-		UTIL_STRCPY(filename, path);
+		if (my_destdir != NULL) {
+			UTIL_STRCPY(filename, my_destdir);
+			UTIL_STRCAT(filename, path);
+		} else {
+			UTIL_STRCPY(filename, path);
+		}
 	}
 	UTIL_STRCAT(filename, "/");
-	UTIL_STRCAT(filename, HOST_NAME);
+	UTIL_STRCAT(filename, my_tagline);
 	UTIL_STRCAT(filename, ".json");
 
 	install_mkdir(filename);
@@ -121,19 +116,24 @@ install_add_manifest(char *path)
 	}
 
 	fprintf(fp, "{\n");
-	fprintf(fp, "  \"name\": \"%s\",\n", HOST_NAME);
-	fprintf(fp, "  \"description\": \"%s\",\n", DESCRIPTION);
-	fprintf(fp, "  \"path\": \"%s\",\n", my_executable);
+	fprintf(fp, "  \"name\": \"%s\",\n", my_tagline);
+	fprintf(fp, "  \"description\": \"%s\",\n", my_description);
+	fprintf(fp, "  \"path\": \"%s\",\n", my_virt_exec);
 	fprintf(fp, "  \"type\": \"stdio\",\n");
-	if (strstr(path, "ozilla") != NULL) {
-		fprintf(fp, "  \"allowed_extensions\": [ \"%s\" ]\n", MOZILLA_TAG);
+	if (strstr(path, "zilla") != NULL) {
+		fprintf(fp, "  \"allowed_extensions\": [ \"%s\" ]\n", config_get_mozilla());
 	} else {
-		fprintf(fp, "  \"allowed_origins\": [ \"chrome-extension://%s/\" ]\n", CHROME_TAG);
+		fprintf(fp, "  \"allowed_origins\": [ \"chrome-extension://%s/\" ]\n", config_get_google());
 	}
 	fprintf(fp, "}\n");
-
 	fclose(fp);
-	util_info("created %s", filename);
+
+	if (my_destdir != NULL) {
+		size_t len = strlen(my_destdir);
+		util_info("created (%.*s) %s", len, filename, filename + len);
+	} else {
+		util_info("created %s", filename);
+	}
 }
 
 
@@ -146,35 +146,57 @@ install_install(char *prog)
 	if (prog == NULL) {
 		util_fatal("can't determine my own executable");
 	}
+
+	if ((my_destdir = getenv("DESTDIR")) != NULL) {
+		if (getuid() != 0 || *prog != '/') {
+			util_fatal("using DESTDIR requires root install");
+		}
+	}
+
 	if (*prog == '/') {
-		UTIL_STRCPY(my_executable, prog);
+		UTIL_STRCPY(my_real_exec, prog);
+		if (my_destdir != NULL) {
+			while ((ptr = strstr(my_real_exec, "//")) != NULL) {
+				memmove(ptr, ptr + 1, strlen(ptr));
+			}
+			ptr = my_real_exec + strlen(my_destdir) + 1;
+			UTIL_STRCPY(my_virt_exec, ptr);
+		} else {
+			UTIL_STRCPY(my_virt_exec, my_real_exec);
+		}
 	} else if (strchr(prog, '/') != NULL) {
-		getcwd(my_executable, sizeof(my_executable));
-		UTIL_STRCAT(my_executable, "/");
-		UTIL_STRCAT(my_executable, prog);
+		getcwd(my_real_exec, sizeof(my_real_exec));
+		UTIL_STRCAT(my_real_exec, "/");
+		UTIL_STRCAT(my_real_exec, prog);
+		while ((ptr = strstr(my_real_exec, "/./")) != NULL) {
+			memmove(ptr, ptr + 2, strlen(ptr));
+		}
+		UTIL_STRCPY(my_virt_exec, my_real_exec);
 	} else {
 		UTIL_STRCPY(env_path, getenv("PATH"));
 		for (ptr = strtok(env_path, ":"); ptr != NULL; ptr = strtok(NULL, ":")) {
-			UTIL_STRCPY(my_executable, ptr);
-			UTIL_STRCAT(my_executable, "/");
-			UTIL_STRCAT(my_executable, prog);
-			if (stat(my_executable, &sb) == 0) {
+			UTIL_STRCPY(my_real_exec, ptr);
+			UTIL_STRCAT(my_real_exec, "/");
+			UTIL_STRCAT(my_real_exec, prog);
+			if (stat(my_real_exec, &sb) == 0) {
 				break;
 			}
 		}
 		if (ptr == NULL) {
 			util_fatal("can't locate my own executable");
 		}
+		UTIL_STRCPY(my_virt_exec, my_real_exec);
 	}
-	if (access(my_executable, X_OK) == -1) {
+
+	if (access(my_real_exec, X_OK) == -1) {
 		util_fatal("can't access my own executable");
 	}
 
-	while ((ptr = strstr(my_executable, "/./")) != NULL) {
-		memmove(ptr, ptr + 2, strlen(ptr));
+	if (my_destdir != NULL) {
+		util_info("executable is located at (%s) /%s", my_destdir, my_virt_exec);
+	} else {
+		util_info("executable is located at %s", my_real_exec);
 	}
-
-	util_info("executable is located at %s", my_executable);
 
 	if (getuid() == 0) {
 		install_add_manifest(dir_mozilla_system);
@@ -200,7 +222,7 @@ install_del_manifest(char *path)
 		UTIL_STRCPY(filename, path);
 	}
 	UTIL_STRCAT(filename, "/");
-	UTIL_STRCAT(filename, HOST_NAME);
+	UTIL_STRCAT(filename, my_tagline);
 	UTIL_STRCAT(filename, ".json");
 
 	if (access(filename, R_OK) == 0) {

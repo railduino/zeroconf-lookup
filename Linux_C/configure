@@ -1,0 +1,281 @@
+#!/bin/bash
+#
+# Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
+#
+# This file is part of Zeroconf-Lookup.
+# Project home: https://www.railduino.de/zeroconf-lookup
+# Source code:  https://github.com/railduino/zeroconf-lookup.git
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+set -e
+
+_prefix="/usr/local"
+_exec_prefix="$_prefix"
+_bindir="$_exec_prefix/bin"
+_sysconfdir="$_prefix/etc"
+
+prefix="$_prefix"
+exec_prefix="$_exec_prefix"
+bindir="$_bindir"
+sysconfdir="$_sysconfdir"
+
+
+_google="anjclddigfkhclmgopnjmmpfllfbhfea"
+_mozilla="zeroconf_lookup@railduino.com"
+_timeout="1"
+
+google="$_google"
+mozilla="$_mozilla"
+timeout="$_timeout"
+force=""
+
+
+function usage {
+	local retval=$1
+	shift
+
+	cat >&2 <<-EOF
+
+		Function: create variables compatible with GNU autoconf
+		Usage:    $0 [options]
+		Options:
+		    -h|--help                  Show this help and exit
+
+		    -p|--prefix=<dir>          Set global prefix       (default: $_prefix)
+		    -e|--exec_prefix=<dir>     Set executable prefix   (default: \$prefix)
+		    -b|--bindir=<dir>          Set executable dir      (default: \$exec_prefix/bin)
+		    -s|--sysconfdir=<dir>      Set config dir          (default: \$prefix/etc [/etc if prefix is /usr])
+
+		    -g|--google=<tag>          Set Google Chrome/Chromium allowed_origins
+		                                                       (default: $_google)
+		    -m|--mozilla=<tag>         Set Mozilla Firefox allowed_extensions
+		                                                       (default: $_mozilla)
+		    -t|--timeout=<num>         Set query timeout       (default: $_timeout sec)
+		    -f|--force=<avahi|query>   Enforce query method    (default: avahi if available, else query)
+
+	EOF
+
+	if [[ $1 ]] ; then
+		echo "Error: $*" >&2
+		echo "" >&2
+	fi
+
+	exit $retval
+}
+
+
+temp=$(getopt -o hp:e:b:s:g:m:t:f: --long help,prefix:,exec_prefix:,bindir:,sysconfdir:,google:,mozilla:,timeout:,force: -n 'configure' -- "$@")
+eval set -- "$temp"
+
+
+while true  ; do
+	case "$1" in
+		-h | --help)
+			usage 0
+		;;
+
+		-p | --prefix)
+			case "$2" in
+				"")
+					shift 2
+					exec_prefix=$prefix
+					bindir=$exec_prefix/bin
+					if [[ $prefix == "/usr" ]] ; then
+						sysconfdir=/etc
+					else
+						sysconfdir=$prefix/etc
+					fi
+				;;
+				*)
+					prefix=$2
+					exec_prefix=$prefix
+					bindir=$exec_prefix/bin
+					if [[ $prefix == "/usr" ]] ; then
+						sysconfdir=/etc
+					else
+						sysconfdir=$prefix/etc
+					fi
+					shift 2
+				;;
+			esac
+		;;
+
+		-e | --exec_prefix)
+			case "$2" in
+				"")
+					bindir=$exec_prefix/bin
+					shift 2
+				;;
+				*)
+					exec_prefix=$2
+					bindir=$exec_prefix/bin
+					shift 2
+				;;
+			esac
+		;;
+
+		-b | --bindir)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					bindir=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		-s | --sysconfdir)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					sysconfdir=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		-g | --google)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					google=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		-m | --mozilla)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					mozilla=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		-t | --timeout)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					timeout=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		-f | --force)
+			case "$2" in
+				"")
+					shift 2
+				;;
+				*)
+					force=$2
+					shift 2
+				;;
+			esac
+		;;
+
+		--)
+			shift
+			break
+		;;
+
+		*)
+			usage 1
+		;;
+	esac
+done
+
+[[ -n $prefix      ]] || usage 1 "missing prefix"
+[[ -n $exec_prefix ]] || usage 1 "missing exec_prefix"
+[[ -n $bindir      ]] || usage 1 "missing bindir"
+[[ -n $sysconfdir  ]] || usage 1 "missing sysconfdir"
+[[ -n $google      ]] || usage 1 "missing google"
+[[ -n $mozilla     ]] || usage 1 "missing mozilla"
+[[ -n $timeout     ]] || usage 1 "missing timeout"
+
+if [[ -n $force ]] ; then
+	if [[ $force != "avahi" && $force != "query" ]] ; then
+		usage 1 "force can only be avahi or query"
+	fi
+fi
+
+if [[ $timeout -lt 1 || $timeout -gt 59 ]] ; then
+	usage 1 "timeout must be between 1 and 59 (seconds)"
+fi
+
+
+cat <<-EOF
+	prefix ................: $prefix
+	exec_prefix ...........: $exec_prefix
+	bindir ................: $bindir
+	sysconfdir ............: $sysconfdir
+
+	google ................: $google
+	mozilla ...............: $mozilla
+	timeout ...............: $timeout
+	force .................: $force
+EOF
+
+cat >variables <<-EOF
+	#
+	# Generated file - do not edit; run ./configure
+	#
+	bindir=$bindir
+	sysconfdir=$sysconfdir
+	google=$google
+	mozilla=$mozilla
+	timeout=$timeout
+	force=$force
+EOF
+
+cat >config.h <<-EOF
+	/*
+	 * Generated file - do not edit; run ./configure
+	 */
+
+	#ifndef _CONFIG_H
+	#define _CONFIG_H 1
+
+	#define CONFIG_FILE	"$sysconfdir/zeroconf_lookup.conf"
+
+	#define GOOGLE_TAG	"$google"
+	#define MOZILLA_TAG	"$mozilla"
+	#define TIME_OUT	"$timeout"
+	#define FORCE_METHOD	"$force"
+
+	#endif /* !_CONFIG_H */
+
+EOF
+
+exit 0
+

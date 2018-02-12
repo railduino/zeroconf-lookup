@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2018 Volker Wiegand <volker@railduino.de>
  *
  * This file is part of Zeroconf-Lookup.
+ * Project home: https://www.railduino.de/zeroconf-lookup
+ * Source code:  https://github.com/railduino/zeroconf-lookup.git
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,32 +26,17 @@
  *
  ****************************************************************************/
 
-#define VERSION		"2.3.0"
-#define HOST_NAME	"com.railduino.zeroconf_lookup"
-#define DESCRIPTION	"Find HTTP Servers in the .local domain using Zeroconf"
-#define CHROME_TAG	"anjclddigfkhclmgopnjmmpfllfbhfea"
-#define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
 
+#ifndef _COMMON_H
+#define _COMMON_H 1
 
-//#include <stdio.h>
-//#include <stddef.h>
-//#include <stdlib.h>
-//#include <stdarg.h>
-//#include <string.h>
-//#include <time.h>
-//#include <errno.h>
-//#include <sys/types.h>
-//#include <unistd.h>
-//#include <fcntl.h>
-//#include <sys/stat.h>
-//#include <getopt.h>
-//#include <syslog.h>
-//#include <poll.h>
-
-//#include <netdb.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
 
 
 typedef struct _result {
@@ -70,16 +57,27 @@ typedef struct _txt {
 } txt_t;
 
 
+// Prototypes for config.c
+
+void  config_read(char *google, char *mozilla, char *timeout, char *force);
+
+char *config_get_google(void);
+char *config_get_mozilla(void);
+int   config_get_timeout(void);
+int   config_get_force(void);
+
+
 // Prototypes for avahi.c
 
 result_t *avahi_browse(void);
 
 
-// Prototypes for install.c
+// Prototypes for query.c
 
-void install_set_chrome(char *str);
-void install_set_mozilla(char *str);
-void install_set_timeout(char *str);
+result_t *query_browse(void);
+
+
+// Prototypes for install.c
 
 void install_install(char *prog);
 void install_uninstall(void);
@@ -93,7 +91,7 @@ void install_uninstall(void);
 void *util_malloc(size_t size);
 void *util_realloc(void *ptr, size_t size, size_t prev);
 char *util_strdup(const char *str);
-void util_free(void *ptr);
+void  util_free(void *ptr);
 
 char *util_strcpy(char *dst, const char *src, size_t len);
 char *util_strcat(char *dst, const char *src, size_t len);
@@ -102,10 +100,12 @@ char *util_append(char *dst, size_t len, char *fmt, ...);
 
 void util_inc_verbose(void);
 int  util_get_verbose(void);
+
 void util_open_logfile(char *logfile);
 void util_debug(int level, char *msg, ...);
 void util_info(char *msg, ...);
-void util_warn(char *msg, ...);
-void util_error(char *msg, ...);
+void util_error(const char *func, int line, char *msg, ...);
 void util_fatal(char *msg, ...);
+
+#endif /* !_COMMON_H */
 
