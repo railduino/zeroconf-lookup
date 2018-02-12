@@ -39,7 +39,7 @@ zeroconf_lookup: $(OBJS)
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: clean tags variables
+.PHONY: clean tags variables deb rpm
 
 clean:
 	rm -f zeroconf_lookup *.o tags
@@ -52,4 +52,30 @@ install: zeroconf_lookup variables
 
 uninstall: zeroconf_lookup variables
 	./setup.sh uninstall
+
+deb:
+	sudo rm -rf /tmp/fpm_zeroconf_lookup
+	./configure -p /usr
+	make zeroconf_lookup
+	sudo make install DESTDIR=/tmp/fpm_zeroconf_lookup
+	fpm -s dir -t deb -f \
+		-C /tmp/fpm_zeroconf_lookup \
+		--name zeroconf_lookup \
+		--version 2.3.1 \
+		--iteration 1 \
+		--description "Find HTTP Servers in the .local domain using Zeroconf" .
+	sudo rm -rf /tmp/fpm_zeroconf_lookup
+
+rpm:
+	sudo rm -rf /tmp/fpm_zeroconf_lookup
+	./configure -p /usr
+	make zeroconf_lookup
+	sudo make install DESTDIR=/tmp/fpm_zeroconf_lookup
+	fpm -s dir -t rpm -f \
+		-C /tmp/fpm_zeroconf_lookup \
+		--name zeroconf_lookup \
+		--version 2.3.1 \
+		--iteration 1 \
+		--description "Find HTTP Servers in the .local domain using Zeroconf" .
+	sudo rm -rf /tmp/fpm_zeroconf_lookup
 

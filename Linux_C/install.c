@@ -150,7 +150,7 @@ install_install(char *prog)
 			while ((ptr = strstr(my_real_exec, "//")) != NULL) {
 				memmove(ptr, ptr + 1, strlen(ptr));
 			}
-			ptr = my_real_exec + strlen(my_destdir) + 1;
+			ptr = my_real_exec + strlen(my_destdir);
 			UTIL_STRCPY(my_virt_exec, ptr);
 		} else {
 			UTIL_STRCPY(my_virt_exec, my_real_exec);
