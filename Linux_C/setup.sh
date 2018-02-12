@@ -50,6 +50,9 @@ if [[ $1 == "uninstall" ]] ; then
 	if [[ -x "$bindir/zeroconf_lookup" ]] ; then
 		rm -f -v "$bindir/zeroconf_lookup"
 	fi
+	if [[ -x "$sysconfdir/zeroconf_lookup.conf" ]] ; then
+		rm -f -v "$sysconfdir/zeroconf_lookup.conf"
+	fi
 	exit 0
 fi
 
