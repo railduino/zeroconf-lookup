@@ -107,7 +107,7 @@ You should be able to generate an executable now and can continue with installin
 
 ## Installing the **Go** version
 
-**coming soon (the code is already in `Apple_Go`)**
+**coming soon (the code is already in `Apple_Go` - apart from the manifest locations, it is identical to the *Windows* version)**
 
 ## Installing the *browser manifest* (for all flavors and programming languages)
 
