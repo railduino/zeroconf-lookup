@@ -9,7 +9,7 @@ It consists of two parts:
 
 This file provides instructions for installing the *native host* executable including the *browser manifest* in various environments.
 
-The first step is cloning (or updating) this **GitHub** repository:
+The first step is cloning (or updating) this **GitHub** repository, unless you are using Homebrew, RPM or the like (then just see below).
 
 `git clone https://github.com/railduino/zeroconf-lookup.git`
 
