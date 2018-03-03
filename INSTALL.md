@@ -49,7 +49,7 @@ To this end, run `zeroconf_lookup.exe -i` which will create the appropriate mani
 After doing that, you may not move the executable anywhere else (or if you do, run the command again).
 Running `zeroconf_lookup.exe -u` will remove the registry keys again.
 
-When running the `zeroconf_lookup.exe` executable fot the first time on my *Windows 10* computer,
+When running the `zeroconf_lookup.exe` executable for the first time on my *Windows 10* computer,
 I had to allow the networking in the **Windows Defender Firewall** - you may also have to register with your firewall.
 
 **That's it - you should be all set up now and the extension should work.**
@@ -157,5 +157,5 @@ Others should compile and work, too.
 There is a **GNU** *AutoTools* compatible build pipeline with `./configure`, `make` and `sudo make install`.
 Only **compatible** - it requires that the `avahi-client` and `avahi-common` libraries are in the linker path.
 
-** more to follow - including the generation of *DEB* and *RPM* packages through the *Ruby* based *FPM* program.**
+**More to follow - including the generation of DEB and RPM packages through the Ruby based FPM program.**
 
