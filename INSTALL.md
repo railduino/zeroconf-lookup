@@ -43,10 +43,6 @@ Running `zeroconf_lookup.exe -u` will remove the registry keys again. Nothing el
 Hint: A NullSoft or WiX installer are probably not worth the while, we have just one executable
 (which can reside anywhere) plus two registry keys created by the said executable.
 
-## Trouble shooting
-
-**coming soon**
-
 # Installing on OS X / macOS
 
 Hint: I am an *Apple Newbie* and my only device is a *Mac Mini (early 2011)* running *El Capitan* (I cannot upgrade to macOS right now).
@@ -105,6 +101,9 @@ You should be able to generate an executable now and can continue with installin
 
 **coming soon (still learning how to brew)**
 
+Note: I saw this line in the Homebrew *Acceptable Formulae* docs: "We frown on authors submitting their own work unless it is very popular."
+I guess this means I am not allowed to submit my own work here. Perhaps I need to wait until it gets popular :-)
+
 ## Installing the **Go** version
 
 **coming soon (the code is already in `Apple_Go` - apart from the manifest locations, it is identical to the *Windows* version)**
@@ -129,11 +128,7 @@ Please use only one method (you can remove the manifests with `[sudo] zeroconf_l
 
 **That's it - you should be all set up now and the extension should work. If not, see below.**
 
-## Trouble shooting
-
-**coming soon**
-
 # Installing on Linux
 
-**coming soon**
+**coming next (the code and install routines are already in Linux_C and Linux_Go)**
 
