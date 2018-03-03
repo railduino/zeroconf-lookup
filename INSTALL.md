@@ -19,6 +19,17 @@ In the unlikely event that you don't have `git` installed, you can of course dow
 
 Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it gets operating system specific.
 
+# A note on trouble shooting in general
+
+After compiling the `zeroconf_lookup` executable (no matter where and how) it is good practice to check that it works.
+The first test therefore is running `zeroconf_lookup -h` in the current directory (usually prefixed with `./` under Linux or OS X / macOS).
+It will print a usage information and exit.
+If that works, try running `zeroconf_lookup -r` which will collect data the same way as in production mode,
+but write the *JSON* data on standard output in human readable form (i.e. without the binary length upfront).
+This **must** work - otherwise it is useless to continue. Please use the **GitHub** *Issue Tracker* and I will try to help.
+
+Then you can install the executable and the *browser manifest* files as described below. Again check that the setup is working.
+
 # Installing on Windows
 
 The Windows version is a **Go** program, so you should have `go` installed. The minimum version is **1.6** since we are using *context*.
@@ -34,28 +45,32 @@ Then run `make` to build the program. Remember, this is not a *Makefile* but jus
 
 The resulting executable is self contained and there is just one step left:
 creating the Windows Registry keys for finding the *browser manifest* files.
-To this end, run `zeroconf_lookup.exe -i` which will create the appropriate manifest files.
+To this end, run `zeroconf_lookup.exe -i` which will create the appropriate manifest files and registry keys.
 After doing that, you may not move the executable anywhere else (or if you do, run the command again).
-Running `zeroconf_lookup.exe -u` will remove the registry keys again. Nothing else is installed.
+Running `zeroconf_lookup.exe -u` will remove the registry keys again.
 
-**That's it - you should be all set up now and the extension should work. If not, see below.**
+When running the `zeroconf_lookup.exe` executable fot the first time on my *Windows 10* computer,
+I had to allow the networking in the **Windows Defender Firewall** - you may also have to register with your firewall.
 
-Hint: A NullSoft or WiX installer are probably not worth the while, we have just one executable
+**That's it - you should be all set up now and the extension should work.**
+
+Hint: A NullSoft or WiX installer are probably not worth the while, we have just one executable and two manifest files
 (which can reside anywhere) plus two registry keys created by the said executable.
 
 # Installing on OS X / macOS
 
 Hint: I am an *Apple Newbie* and my only device is a *Mac Mini (early 2011)* running *El Capitan* (I cannot upgrade to macOS right now).
 
-The common setup is to install the executable (`zeroconf_lookup`) either at `/usr/local/bin` or any location writable by the running user.
-In any case the *browser manifest* must be installed in a well-known location with a reference to the executable. This is done by calling `zeroconf_lookup -i`
+The common setup is to install the executable (`zeroconf_lookup`) either at `/usr/local/bin` or any location writable by the current user.
+In any case the *browser manifest* must be installed in a well-known location with a reference to the executable.
+This is done by calling `zeroconf_lookup -i`
 
 There are two flavors of the executable - one written in C and one in Go.
 You may want to check out both and keep the one you like more :-)
 The advantage of the **C** version is that returns immediately.
 The **Go** version collects data and waits at least one second before returning.
 
-## Installing the **C** version via Makefile only
+## Installing the **C** version via plain Makefile
 
 This is the most basic variant, you will only need `tar`, `cc` and `make`.
 
@@ -74,8 +89,9 @@ You should have an executable now and can continue with installing the *browser 
 
 ## Installing the **C** version via CMake
 
-Essentially, this is just the same procedure as before, but is preferrable if you have **CMake** (duh!) and the **mDNSResponder** libraries and headers are not in obvious locations.
-The `CMakeLists.txt` and `cmake/Modules` setup will search for the files and link appropriately.
+Essentially, this is just the same procedure as before, but is preferrable
+if you have **CMake** (duh!) and the **mDNSResponder** libraries and headers are not in obvious locations.
+The `CMakeLists.txt` and `cmake/Modules` will search for the files and link appropriately.
 
 1. Change into the *Apple_C* subdirectory:
    * `cd Apple_C`
@@ -126,9 +142,20 @@ You may also run this as root, in which case the locations will be:
 
 Please use only one method (you can remove the manifests with `[sudo] zeroconf_lookup -u`)
 
-**That's it - you should be all set up now and the extension should work. If not, see below.**
+**That's it - you should be all set up now and the extension should work.**
 
 # Installing on Linux
 
-**coming next (the code and install routines are already in Linux_C and Linux_Go)**
+As with OS X / macOS, there are two versions of the program, one written in **C** and one in **Go**.
+
+## Installing the **C** version
+
+All Linux systems I have access to are running the **Avahi** daemon for service discovery.
+This includes **Ubuntu** (*16.04 LTS*), **CentOS** (*7.4*) and a **Raspberry Pi 3** (*Raspbian Stretch*).
+Others should compile and work, too.
+
+There is a **GNU** *AutoTools* compatible build pipeline with `./configure`, `make` and `sudo make install`.
+Only **compatible** - it requires that the `avahi-client` and `avahi-common` libraries are in the linker path.
+
+** more to follow - including the generation of *DEB* and *RPM* packages through the *Ruby* based *FPM* program.**
 

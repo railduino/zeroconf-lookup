@@ -5,7 +5,7 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H 1
 
-#define CONFIG_FILE	"/etc/zeroconf_lookup.conf"
+#define CONFIG_FILE	"/usr/local/etc/zeroconf_lookup.conf"
 
 #define GOOGLE_TAG	"anjclddigfkhclmgopnjmmpfllfbhfea"
 #define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
