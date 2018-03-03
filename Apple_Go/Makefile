@@ -27,7 +27,6 @@ SRCS := $(wildcard *.go)
 all: zeroconf_lookup
 
 zeroconf_lookup: $(SRCS)
-	ctags *.go
 	go build -o $@
 
 .PHONY: update clean tags

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grandcat/zeroconf"
@@ -36,5 +37,5 @@ func collectZeroconf() (string, error) {
 	}
 	<-ctx.Done()
 
-	return "Zeroconf (Go)", nil
+	return fmt.Sprintf("Zeroconf (Go, %s)", prgVers), nil
 }

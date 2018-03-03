@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -85,7 +86,7 @@ func collectDnssd(path string) (string, error) {
 		addServer(dnsRec.name, dnsRec.target, v4addr, dnsRec.port, dnsRec.txt)
 	}
 
-	return "dns-sd (Go, Call)", nil
+	return fmt.Sprintf("dns-sd (Go, %s)", prgVers), nil
 }
 
 func callDnsSdZ(path string) []string {
