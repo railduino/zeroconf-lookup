@@ -63,7 +63,7 @@ You should have an executable now and can continue with installing the *browser 
 
 ## Installing the **C** version via CMake and XCode
 
-This flavor is probably only interesting if you want to make changes or do all your programming using *XCode*.
+This flavor is probably only interesting if you want to make changes or if you are used to do all your programming using *XCode*.
 
 1. Change into the *Apple_C* subdirectory:
    * `cd Apple_C`
