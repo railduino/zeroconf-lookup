@@ -24,6 +24,8 @@
 # SOFTWARE.
 #
 
+VERSION := 2.3.2
+
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
 
@@ -33,7 +35,6 @@ LDFLAGS += -lavahi-client -lavahi-common
 all: zeroconf_lookup
 
 zeroconf_lookup: $(OBJS)
-	ctags *.[ch]
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c $(HDRS)
@@ -61,7 +62,7 @@ deb:
 	fpm -s dir -t deb -f \
 		-C /tmp/fpm_zeroconf_lookup \
 		--name zeroconf_lookup \
-		--version 2.3.1 \
+		--version $(VERSION) \
 		--iteration 1 \
 		--description "Find HTTP Servers in the .local domain using Zeroconf" .
 	sudo rm -rf /tmp/fpm_zeroconf_lookup
@@ -74,7 +75,7 @@ rpm:
 	fpm -s dir -t rpm -f \
 		-C /tmp/fpm_zeroconf_lookup \
 		--name zeroconf_lookup \
-		--version 2.3.1 \
+		--version $(VERSION) \
 		--iteration 1 \
 		--description "Find HTTP Servers in the .local domain using Zeroconf" .
 	sudo rm -rf /tmp/fpm_zeroconf_lookup

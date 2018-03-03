@@ -33,7 +33,7 @@
 #include <poll.h>
 
 
-#define VERSION		"2.3.1"
+#define VERSION		"2.3.2"
 #define LOG_FILE	"/tmp/zeroconf_lookup.log"
 
 
@@ -192,10 +192,12 @@ main_send_result(char *source, int readable, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	static char *avahi = "Avahi (C)", *query = "Query (C)";
-	static char google[256], mozilla[256], timeout[32], force[32];
+	static char avahi[256], query[256], google[256], mozilla[256], timeout[32], force[32];
 	int c, quiet, readable, do_inst, do_uninst;
 	result_t *result;
+
+	snprintf(avahi, sizeof(avahi), "Avahi (C, %s)", VERSION);
+	snprintf(query, sizeof(query), "Query (C, %s)", VERSION);
 
 	quiet = readable = do_inst = do_uninst = 0;
 	for (;;) {
