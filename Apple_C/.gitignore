@@ -1,0 +1,6 @@
+# Ignore build and install subdirs
+_build/
+_install/
+
+# Ignore the TGZ build dir
+zeroconf_lookup-*/
