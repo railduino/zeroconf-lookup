@@ -63,7 +63,16 @@ You should have an executable now and can continue with installing the *browser 
 
 ## Installing the **C** version via CMake and XCode
 
-**coming soon**
+This flavor is probably only interesting if you want to make changes or do all your programming using *XCode*.
+
+1. Change into the *Apple_C* subdirectory:
+   * `cd Apple_C`
+2. Run the *CMake* setup generating *XCode* project files:
+   * `make xcode`
+3. Call *XCode* in the usual way (assuming you know what this means :-) and switch to the `_build` subdirectory.
+   * `???`
+
+You should be able to generate an executable now and can continue with installing the *browser manifest*
 
 ## Installing the **C** version via Homebrew
 
@@ -71,9 +80,9 @@ You should have an executable now and can continue with installing the *browser 
 
 ## Installing the **Go** version
 
-**coming soon**
+**coming soon (the code is already at `../Apple_Go`)**
 
-## Installing the *browser manifest* (for all variants)
+## Installing the *browser manifest* (for all flavors and programming languages)
 
 Assuming the `zeroconf_lookup` executable is in your **PATH** now, you can install the *browser manifest* with just calling `zeroconf_lookup -i`.
 
