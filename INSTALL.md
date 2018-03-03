@@ -14,7 +14,8 @@ The first step is cloning (or updating) this **GitHub** repository:
 `git clone https://github.com/railduino/zeroconf-lookup.git`
 
 In the unlikely event that you don't have `git` installed, you can of course download an archive and unpack it.
-Then `cd` into this directory. From here on it gets operating system specific.
+
+Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it gets operating system specific.
 
 # Installing on Windows
 
