@@ -21,9 +21,9 @@ Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it get
 
 # Installing on Windows
 
-The Windows version is a **Go** program, so you should have `Go` installed. The minimum version is **1.6** since we are using *context*.
-If you don't want to install **Go** or are not able to do so, you can find a compiled `zeroconf_lookup` executable in the `Windows_Go` subdirectory.
-It was compiled with the standard **Go** compiler version **1.10** using the included `make` batch file.
+The Windows version is a **Go** program, so you should have `go` installed. The minimum version is **1.6** since we are using *context*.
+If you don't want to install **Go** or are not able to do so, you can find a compiled `zeroconf_lookup.exe` executable in the `Windows_Go` subdirectory.
+It was compiled with the standard **Go** compiler version **1.9.3** using the included `make` batch file.
 
 If you haven't installed **Go** yet, you can find instructions for installing it at https://golang.org/doc/install
 Don't forget to add the **GOPATH** and **GOROOT** environment variables and add `go` to your **PATH**
@@ -31,6 +31,21 @@ Don't forget to add the **GOPATH** and **GOROOT** environment variables and add 
 There is a `make.bat` file in the `Windows_Go` subdirectory, so please change into this subdirectory.
 `zeroconf_lookup` depends on some external libraries, so please run `make update` to install or update them first. It may take a while.
 Then run `make` to build the program. Remember, this is not a *Makefile* but just the `make.bat` batch file.
+
+The resulting executable is self contained and there is just one step left:
+creating the Windows Registry keys for finding the *browser manifest* files.
+To this end, run `zeroconf_lookup.exe -i` which will create the appropriate manifest files.
+After doing that, you may not move the executable anywhere else (or if you do, run the command again).
+Running `zeroconf_lookup.exe -u` will remove the registry keys again. Nothing else is installed.
+
+**That's it - you should be all set up now and the extension should work. If not, see below.**
+
+Hint: A NullSoft or WiX installer are probably not worth the while, we have just one executable
+(which can reside anywhere) plus two registry keys created by the said executable.
+
+## Trouble shooting
+
+**coming soon**
 
 # Installing on OS X / macOS
 
