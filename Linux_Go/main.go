@@ -18,7 +18,7 @@ import (
 
 const (
 	prgName  = "zeroconf_lookup"
-	prgVers  = "2.3.0"
+	prgVers  = "2.3.1"
 	apiVers  = 2
 	svcType  = "_http._tcp"
 	maniFest = "com.railduino.zeroconf_lookup"

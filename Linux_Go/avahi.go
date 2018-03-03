@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -48,5 +49,5 @@ func collectAvahi(path string) (string, error) {
 		addServer(fields[3], fields[6], fields[7], port, txt)
 	}
 
-	return "Avahi (Go)", nil
+	return fmt.Sprintf("Avahi (Go, %s)", prgVers), nil
 }
