@@ -9,14 +9,8 @@ tags
 # Ignore Linux / Apple executable
 zeroconf_lookup
 
-# Ignore Windows executables
-*.exe
-
 # Ignore vim swap files
 *.swp
-
-# Ignore LibreOffice temp files
-.~lock.*
 
 # Ignore Chrome private key
 key.pem
