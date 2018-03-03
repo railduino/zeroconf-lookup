@@ -32,18 +32,6 @@ In any case the *browser manifest* must be installed in a well-known location wi
 
 There are two flavors of the executable - one written in C and one in Go. You may want to check out both and keep the one that you like more :-)
 
-## Installing the **C** version via CMake and XCode
-
-**coming soon**
-
-## Installing the **C** version via CMake
-
-**coming soon**
-
-## Installing the **C** version via Homebrew
-
-**coming soon (still learning how to brew)**
-
 ## Installing the **C** version via Makefile only
 
 This is the most basic variant, you will only need `tar`, `cc` and `make`.
@@ -60,6 +48,26 @@ This is the most basic variant, you will only need `tar`, `cc` and `make`.
    * `make install` or `sudo make install` (which ever you need)
 
 You should have an executable now and can continue with installing the *browser manifest*
+
+## Installing the **C** version via CMake
+
+Essentially, this is just the same procedure as before, but is preferrable if you have **CMake** (duh!) and the **mDNSResponder** libraries and headers are not in obvious locations.
+The `CMakeLists.txt` and `cmake/Modules` setup will search for the files and link appropriately.
+
+1. Change into the *Apple_C* subdirectory:
+   * `cd Apple_C`
+2. Run the *CMake* setup and install the executable:
+   * `make install` or `sudo make install` (which ever you need)
+
+You should have an executable now and can continue with installing the *browser manifest*
+
+## Installing the **C** version via CMake and XCode
+
+**coming soon**
+
+## Installing the **C** version via Homebrew
+
+**coming soon (still learning how to brew)**
 
 ## Installing the **Go** version
 
