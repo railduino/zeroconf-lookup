@@ -30,7 +30,9 @@ Hint: I am an *Apple Newbie* and my only device is a *Mac Mini (early 2011)* run
 The common setup is to install the executable (`zeroconf_lookup`) either at `/usr/local/bin` or any location writable by the running user.
 In any case the *browser manifest* must be installed in a well-known location with a reference to the executable. This is done by calling `zeroconf_lookup -i`
 
-There are two flavors of the executable - one written in C and one in Go. You may want to check out both and keep the one you like more :-)
+There are two flavors of the executable - one written in C and one in Go. 
+You may want to check out both and keep the one you like more :-) 
+The advantage of the **C** version is that returns immediately. The **Go** version collects data and waits at least one second before returning.
 
 ## Installing the **C** version via Makefile only
 
