@@ -21,7 +21,16 @@ Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it get
 
 # Installing on Windows
 
-**coming soon (the code is already in `Windows_Go`)**
+The Windows version is a **Go** program, so you should have `Go` installed. The minimum version is **1.6** since we are using *context*.
+If you don't want to install **Go** or are not able to do so, you can find a compiled `zeroconf_lookup` executable in the `Windows_Go` subdirectory.
+It was compiled with the standard **Go** compiler version **1.10** using the included `make` batch file.
+
+If you haven't installed **Go** yet, you can find instructions for installing it at https://golang.org/doc/install
+Don't forget to add the **GOPATH** and **GOROOT** environment variables and add `go` to your **PATH**
+
+There is a `make.bat` file in the `Windows_Go` subdirectory, so please change into this subdirectory.
+`zeroconf_lookup` depends on some external libraries, so please run `make update` to install or update them first. It may take a while.
+Then run `make` to build the program. Remember, this is not a *Makefile* but just the `make.bat` batch file.
 
 # Installing on OS X / macOS
 
@@ -30,9 +39,10 @@ Hint: I am an *Apple Newbie* and my only device is a *Mac Mini (early 2011)* run
 The common setup is to install the executable (`zeroconf_lookup`) either at `/usr/local/bin` or any location writable by the running user.
 In any case the *browser manifest* must be installed in a well-known location with a reference to the executable. This is done by calling `zeroconf_lookup -i`
 
-There are two flavors of the executable - one written in C and one in Go. 
-You may want to check out both and keep the one you like more :-) 
-The advantage of the **C** version is that returns immediately. The **Go** version collects data and waits at least one second before returning.
+There are two flavors of the executable - one written in C and one in Go.
+You may want to check out both and keep the one you like more :-)
+The advantage of the **C** version is that returns immediately.
+The **Go** version collects data and waits at least one second before returning.
 
 ## Installing the **C** version via Makefile only
 
