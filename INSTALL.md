@@ -4,8 +4,8 @@
 
 It consists of two parts:
 
-1. The *browser extension* itself is available through the appropriate app store
-2. The so called *native host* needs to be installed by the user with operating system specific procedures. It consists of just one executable and an optional config file.
+1. The so called *native host* needs to be installed by the user with operating system specific procedures. It consists of just one executable and an optional config file.
+2. The *browser extension* itself is available through the appropriate app store. It locates the *native host* by means of a *browser manifest*.
 
 This file provides instructions for installing the *native host* executable including the *browser manifest* in various environments.
 
