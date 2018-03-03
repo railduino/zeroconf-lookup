@@ -31,21 +31,24 @@ VERSION := 2.2.0
 clean:
 	rm -rf _build _install
 	rm -rf zeroconf_lookup-$(VERSION)
-	mkdir -p _build
 
 build: clean
+	mkdir -p _build
 	cd _build && cmake ..
 	cd _build && make
 
 xcode: clean
+	mkdir -p _build
 	cd _build && cmake .. -G Xcode
 
 pkg: clean
+	mkdir -p _build
 	cd _build && cmake .. -DCMAKE_INSTALL_PREFIX=../_install/usr/local
 	cd _build && make
 	cd _build && make install
 
 tgz: clean
+	mkdir -p _build
 	cd _build && cmake ..
 	rm -rf zeroconf_lookup-$(VERSION)
 	mkdir zeroconf_lookup-$(VERSION)
@@ -55,8 +58,10 @@ tgz: clean
 	rm -rf zeroconf_lookup-$(VERSION)
 
 install: build
+	mkdir -p _build
 	cd _build && make install
 
 sudo: build
+	mkdir -p _build
 	cd _build && sudo make install
 
