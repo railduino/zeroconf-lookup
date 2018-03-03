@@ -21,7 +21,7 @@ Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it get
 
 # Installing on Windows
 
-**coming soon**
+**coming soon (the code is already in `Windows_Go`)**
 
 # Installing on OS X / macOS
 
@@ -102,11 +102,11 @@ Please use only one method (you can remove the manifests with `[sudo] zeroconf_l
 
 **That's it - you should be all set up now and the extension should work. If not, see below.**
 
-# Installing on Linux
+## Trouble shooting
 
 **coming soon**
 
-# Trouble shooting
+# Installing on Linux
 
 **coming soon**
 
