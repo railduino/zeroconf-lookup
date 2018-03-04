@@ -23,42 +23,35 @@ terminate this application as needed.
 
 This repository aims to provide various methods for getting back
 Zeroconf into the browser(s). It contains both the standalone host
-application (in various flavors) and the browser extension.
+application (in various flavors) and the source code of the browser extensions.
 
 So far, I have not been able to use connection-based messaging, only connectionless.
 A possible hint can be found under
 https://discourse.mozilla.org/t/connection-based-native-messaging-doesnt-work-in-popups/17185
 
-The programs under OS X / macOS and Linux  send Log output to **/tmp/zeroconf\_lookup.log**.
-By means of a config file it is possible to also send **DEBUG** messages.
+By means of a config file it is possible to send **LOG** and **DEBUG** messages.
 See below for configuring. Since this logfile will be overwritten by every invocation, it will not grow.
 
 ### Configuration
 
-Firefox and Chrome / Chromium always call the application without command line parameters.
-There are variables that can be changed, and **zeroconf\_lookup** checks
-for them in several standard locations. The first one found is used, so
-locations cannot be mixed.
-
-The variables and their default value are:
-
-*\[to be added\]*
+**to be added - call zeroconf_lookup -h or check the source code - sorry I'm still working on it**
 
 
 # Installation
 
 For installing the *native host* program, see the INSTALL.md file in this directory.
 
-## Installation – Firefox WebExtension
+## Installation – Firefox and CHrome / Chromium WebExtension
 
-The extension is available for production from
-https://addons.mozilla.org/en-US/firefox/addon/railduino-zeroconf-lookup/
-and has been approved by the Firefox add-ons Team.
+To install the *browser extension* search for **zeroconf** in the appropriate app stores.
 
-It can also be installed in debugging mode from the Git repository.
+For Firefox It can also be installed in debugging mode from the Git repository.
 See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/WebExtensions_and_the_Add-on_ID#Basic_workflow_with_no_add-on_ID
 for an explanation how to install. The Firefox directory within the
 local copy of the repository is the location that needs to be loaded.
+
+The same is possible for Chrome / Chromium
+See https://developer.chrome.com/extensions/getstarted#unpacked
 
 # Contributing to this repository
 
