@@ -34,7 +34,7 @@ Then you can install the executable and the *browser manifest* files as describe
 
 The Windows version is a **Go** program, so you should have `go` installed. The minimum version is **1.6** since we are using *context*.
 If you don't want to install **Go** or are not able to do so, you can find a compiled `zeroconf_lookup.exe` executable in the `Windows_Go` subdirectory.
-It was compiled with the standard **Go** compiler version **1.9.3** using the included `make` batch file.
+It was compiled with the standard (64 bit) **Go** compiler version **1.9.3** using the included `make` batch file.
 
 If you haven't installed **Go** yet, you can find instructions for installing it at https://golang.org/doc/install
 Don't forget to add the **GOPATH** and **GOROOT** environment variables and add `go` to your **PATH**
