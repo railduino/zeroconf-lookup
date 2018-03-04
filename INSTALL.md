@@ -15,6 +15,7 @@ The first step is cloning (or updating) this **GitHub** repository, unless you a
 `git clone https://github.com/railduino/zeroconf-lookup.git`
 
 In the unlikely event that you don't have `git` installed, you can of course download an archive and unpack it.
+The download link for the latest ZIP archive is https://github.com/railduino/zeroconf-lookup/archive/master.zip
 
 Anyway, `cd` into the `zeroconf_lookup` directory. Well, and from here on it gets operating system specific.
 
