@@ -1,15 +1,14 @@
 # Installing zeroconf\_lookup
 
-**zeroconf\_lookup** is a browser extension for **Firefox** and **Chrome** / **Chromium**.
-
-Hint: The **Chrome** extension has not been checked into the app store, this is next on the agenda .....
+**zeroconf\_lookup** is a browser extension for **Mozilla Firefox** and **Google Chrome** / **Chromium**.
 
 It consists of two parts:
 
 1. The so called *native host* needs to be installed by the user with operating system specific procedures. It consists of just one executable and an optional config file.
-2. The *browser extension* itself is available through the appropriate app store. It locates the *native host* by means of a *browser manifest*.
+2. The *browser extension* is available through the appropriate app store. To find it, just search for **zeroconf**.
 
-This file provides instructions for installing the *native host* executable including the *browser manifest* in various environments.
+* This file provides instructions for installing the *native host* executable in various environments including the *browser manifest*.
+* The *browser extension* locates the *native host* by means of the aforementioned *browser manifest*.
 
 The first step is cloning (or updating) this **GitHub** repository, unless you are using *Homebrew*, *RPM* or the like (then just see below).
 
