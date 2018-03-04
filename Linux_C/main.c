@@ -33,7 +33,7 @@
 #include <poll.h>
 
 
-#define VERSION		"2.3.2"
+#define VERSION		"2.4.0"
 #define LOG_FILE	"/tmp/zeroconf_lookup.log"
 
 
@@ -43,7 +43,7 @@ static struct option long_options[] = {
 	{ "help",      no_argument,       NULL, 'h' },
 	{ "install",   no_argument,       NULL, 'i' },
 	{ "mozilla",   required_argument, NULL, 'm' },
-	{ "quiet",     no_argument,       NULL, 'q' },
+	{ "log",       no_argument,       NULL, 'l' },
 	{ "readable",  no_argument,       NULL, 'r' },
 	{ "timeout",   required_argument, NULL, 't' },
 	{ "uninstall", no_argument,       NULL, 'u' },
@@ -73,7 +73,7 @@ main_usage(char *name, int retval)
 	fprintf(fp, "      -i|--install               Install Firefox/Chrome manifests (sudo for system wide)\n");
 	fprintf(fp, "      -m|--mozilla=<tag>         Change Mozilla Firefox allowed_extensions\n");
 	fprintf(fp, "                                     Default: %s\n", MOZILLA_TAG);
-	fprintf(fp, "      -q|--quiet                 Do not write logfile (%s)\n", LOG_FILE);
+	fprintf(fp, "      -l|--log                   Write logfile (%s)\n", LOG_FILE);
 	fprintf(fp, "      -r|--readable              Use human readable length for output\n");
 	fprintf(fp, "      -t|--timeout=<num>         Set query timeout\n");
 	fprintf(fp, "                                     Default: %s sec)\n", TIME_OUT);
@@ -193,15 +193,15 @@ int
 main(int argc, char *argv[])
 {
 	static char avahi[256], query[256], google[256], mozilla[256], timeout[32], force[32];
-	int c, quiet, readable, do_inst, do_uninst;
+	int c, do_log, readable, do_inst, do_uninst;
 	result_t *result;
 
 	snprintf(avahi, sizeof(avahi), "Avahi (C, %s)", VERSION);
 	snprintf(query, sizeof(query), "Query (C, %s)", VERSION);
 
-	quiet = readable = do_inst = do_uninst = 0;
+	do_log = readable = do_inst = do_uninst = 0;
 	for (;;) {
-		c = getopt_long(argc, argv, "f:g:h?im:qrt:uv", long_options, NULL);
+		c = getopt_long(argc, argv, "f:g:h?im:lrt:uv", long_options, NULL);
 		if (c < 0) {
 			break;
 		}
@@ -223,8 +223,8 @@ main(int argc, char *argv[])
 			case 'm':
 				UTIL_STRCPY(mozilla, optarg);
 				break;
-			case 'q':
-				quiet = 1;
+			case 'l':
+				do_log = 1;
 				break;
 			case 'r':
 				readable = 1;
@@ -244,7 +244,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (quiet == 0 && do_inst == 0 && do_uninst == 0) {
+	if (do_log == 0 && do_inst == 0 && do_uninst == 0) {
 		util_open_logfile(LOG_FILE);
 	}
 

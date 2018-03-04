@@ -78,7 +78,9 @@ func collectDnssd(path string) (string, error) {
 
 		fields := strings.Fields(line)
 		if len(fields) < 6 {
-			log.Println("invalid address line for " + dnsRec.target)
+			if *do_log {
+				log.Println("invalid address line for " + dnsRec.target)
+			}
 			continue
 		}
 

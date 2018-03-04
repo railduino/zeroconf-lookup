@@ -24,7 +24,7 @@
 # SOFTWARE.
 #
 
-VERSION := 2.2.0
+VERSION := 2.4.0
 
 .PHONY: clean
 

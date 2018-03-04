@@ -39,7 +39,7 @@
 static struct option long_options[] = {
 	{ "help",      no_argument, NULL, 'h' },
 	{ "install",   no_argument, NULL, 'i' },
-	{ "quiet",     no_argument, NULL, 'q' },
+	{ "log",       no_argument, NULL, 'l' },
 	{ "readable",  no_argument, NULL, 'r' },
 	{ "uninstall", no_argument, NULL, 'u' },
 	{ "verbose",   no_argument, NULL, 'v' },
@@ -62,7 +62,7 @@ main_usage(char *name, int retval)
 	fprintf(fp, "Usage: %s [options ...]\n", name);
 	fprintf(fp, "      -h|--help                  Display this usage information and exit\n");
 	fprintf(fp, "      -i|--install               Install Firefox/Chrome manifests (sudo for system wide)\n");
-	fprintf(fp, "      -q|--quiet                 Do not write logfile (%s)\n", LOG_FILE);
+	fprintf(fp, "      -l|--log                   Write logfile (%s)\n", LOG_FILE);
 	fprintf(fp, "      -r|--readable              Use human readable length for output\n");
 	fprintf(fp, "      -u|--uninstall             Uninstall Firefox/Chrome manifests (sudo for system wide)\n");
 	fprintf(fp, "      -v|--verbose               Increase verbosity level\n");
@@ -179,7 +179,7 @@ main_send_result(char *source, int readable, result_t *result)
 int
 main(int argc, char *argv[])
 {
-	int c, quiet, readable, do_inst, do_uninst;
+	int c, do_log, readable, do_inst, do_uninst;
 	char progname[FILENAME_MAX];
 	uint32_t size = sizeof(progname);
 
@@ -187,9 +187,9 @@ main(int argc, char *argv[])
 		util_fatal("can't access my own executable");
 	}
 
-	quiet = readable = do_inst = do_uninst = 0;
+	do_log = readable = do_inst = do_uninst = 0;
 	for (;;) {
-		c = getopt_long(argc, argv, "h?iqruv", long_options, NULL);
+		c = getopt_long(argc, argv, "h?ilruv", long_options, NULL);
 		if (c < 0) {
 			break;
 		}
@@ -202,8 +202,8 @@ main(int argc, char *argv[])
 			case 'i':
 				do_inst = 1;
 				break;
-			case 'q':
-				quiet = 1;
+			case 'l':
+				do_log = 1;
 				break;
 			case 'r':
 				readable = 1;
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (quiet == 0 && do_inst == 0 && do_uninst == 0) {
+	if (do_log == 1 && do_inst == 0 && do_uninst == 0) {
 		util_open_logfile(LOG_FILE);
 	}
 

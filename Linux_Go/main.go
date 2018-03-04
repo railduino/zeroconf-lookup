@@ -18,7 +18,7 @@ import (
 
 const (
 	prgName  = "zeroconf_lookup"
-	prgVers  = "2.3.1"
+	prgVers  = "2.4.0"
 	apiVers  = 2
 	svcType  = "_http._tcp"
 	maniFest = "com.railduino.zeroconf_lookup"
@@ -51,6 +51,7 @@ var (
 	origin    = flag.String("c", chrAllow, "Setup Chrome allowed_origins (with -i)")
 	install   = flag.Bool(  "i", false,    "Install Mozilla/Chrome manifests (sudo for system wide)")
 	force     = flag.String("f", "",       "Force use of method (avahi | zeroconf, with -i | -r)")
+	do_log    = flag.Bool(  "l", false,    "Write log (/tmp/zeroconf_lookup.log")
 	extension = flag.String("m", mozAllow, "Setup Mozilla allowed_extensions (with -i)")
 	readable  = flag.Bool(  "r", false,    "Use human readable i/o size")
 	testing   = flag.Bool(  "t", false,    "Enable testing mode")
@@ -76,22 +77,24 @@ func main() {
 		*readable = true
 	}
 
-	f, err := os.OpenFile("/tmp/zeroconf_lookup.log", os.O_WRONLY | os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
-	log.SetPrefix(prgName + ": ")
+	if *do_log {
+		f, err := os.OpenFile("/tmp/zeroconf_lookup.log", os.O_WRONLY | os.O_CREATE, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		log.SetOutput(f)
+		log.SetPrefix(prgName + ": ")
 
-	if *verbose {
-		log.Printf("Prog Version ....: %s\n", prgVers)
-		log.Printf("API Version .....: %d\n", apiVers)
-		log.Printf("force ...........: %s\n", *force)
-		log.Printf("readable ........: %v\n", *readable)
-		log.Printf("verbose .........: %v\n", *verbose)
-		log.Printf("timeout .........: %d sec\n", *timeout)
-		log.Printf("testing .........: %v\n", *testing)
+		if *verbose {
+			log.Printf("Prog Version ....: %s\n", prgVers)
+			log.Printf("API Version .....: %d\n", apiVers)
+			log.Printf("force ...........: %s\n", *force)
+			log.Printf("readable ........: %v\n", *readable)
+			log.Printf("verbose .........: %v\n", *verbose)
+			log.Printf("timeout .........: %d sec\n", *timeout)
+			log.Printf("testing .........: %v\n", *testing)
+		}
 	}
 
 	if *readable == false {
@@ -99,16 +102,22 @@ func main() {
 			if err != io.EOF {
 				log.Fatal(err)
 			}
-			log.Println("no input - exit")
+			if *do_log {
+				log.Println("no input - exit")
+			}
 		}
 	}
 
-	log.Println("start collecting")
+	if *do_log {
+		log.Println("start collecting")
+	}
 	source, err := collectData()
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("time is up, used %s\n", source)
+	if *do_log {
+		log.Printf("time is up, used %s\n", source)
+	}
 
 	result := output{Version: apiVers, Source: source, Result: servers}
 	buffer := bytes.Buffer{}
@@ -144,7 +153,9 @@ func readCommand(input io.Reader) error {
 		return errors.New("missing count input")
 	}
 	counter := int(binary.LittleEndian.Uint32(cntBuf))
-	log.Printf("expect %d message bytes\n", counter)
+	if *do_log {
+		log.Printf("expect %d message bytes\n", counter)
+	}
 
 	msgBuf := make([]byte, counter)
 	if cnt, err := io.ReadAtLeast(input, msgBuf, counter); err != nil {
@@ -155,7 +166,9 @@ func readCommand(input io.Reader) error {
 	msgStr := strings.Trim(string(msgBuf), `"`)
 
 	if msgStr == "Lookup" {
-		log.Println("found Lookup (plain)")
+		if *do_log {
+			log.Println("found Lookup (plain)")
+		}
 		return nil
 	}
 
@@ -166,11 +179,15 @@ func readCommand(input io.Reader) error {
 		return err
 	}
 	if msgCmd.Cmd == "Lookup" {
-		log.Println("found Lookup (JSON)")
+		if *do_log {
+			log.Println("found Lookup (JSON)")
+		}
 		return nil
 	}
 
-	log.Printf("unknown command %+v\n", msgCmd)
+	if *do_log {
+		log.Printf("unknown command %+v\n", msgCmd)
+	}
 	return nil
 }
 
@@ -204,11 +221,15 @@ func addServer(name, target, a string, port int, txt []string) {
 
 	for _, srv := range servers {
 		if cmp.Equal(srv, newSrv) {
-			log.Printf("duplicate server %s\n", newSrv.Name)
+			if *do_log {
+				log.Printf("duplicate server %s\n", newSrv.Name)
+			}
 			return
 		}
 	}
 
-	log.Printf("found %s for '%s' (%v)\n", newSrv.URL, newSrv.Name, newSrv.Txt)
+	if *do_log {
+		log.Printf("found %s for '%s' (%v)\n", newSrv.URL, newSrv.Name, newSrv.Txt)
+	}
 	servers = append(servers, newSrv)
 }
