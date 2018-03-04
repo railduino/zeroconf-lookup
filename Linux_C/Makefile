@@ -24,7 +24,7 @@
 # SOFTWARE.
 #
 
-VERSION := 2.4.0
+VERSION := 2.4.1
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))

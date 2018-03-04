@@ -7,7 +7,7 @@
 
 #define CONFIG_FILE	"/etc/zeroconf_lookup.conf"
 
-#define GOOGLE_TAG	"anjclddigfkhclmgopnjmmpfllfbhfea"
+#define GOOGLE_TAG	"gikfkgfjepbdpiljbieedpkcjikapbbg"
 #define MOZILLA_TAG	"zeroconf_lookup@railduino.com"
 #define TIME_OUT	"1"
 #define FORCE_METHOD	""

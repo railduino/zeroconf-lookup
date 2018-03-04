@@ -18,11 +18,11 @@ import (
 
 const (
 	prgName  = "zeroconf_lookup"
-	prgVers  = "2.3.0"
+	prgVers  = "2.4.1"
 	apiVers  = 2
 	svcType  = "_http._tcp"
 	maniFest = "com.railduino.zeroconf_lookup"
-	chrAllow = "anjclddigfkhclmgopnjmmpfllfbhfea"
+	chrAllow = "gikfkgfjepbdpiljbieedpkcjikapbbg"
 	mozAllow = "zeroconf_lookup@railduino.com"
 	dfltTime = 1
 )

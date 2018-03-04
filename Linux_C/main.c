@@ -33,7 +33,7 @@
 #include <poll.h>
 
 
-#define VERSION		"2.4.0"
+#define VERSION		"2.4.1"
 #define LOG_FILE	"/tmp/zeroconf_lookup.log"
 
 
