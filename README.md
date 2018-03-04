@@ -1,7 +1,7 @@
 # zeroconf-lookup
 
 Browser WebExtension for finding local web servers using Zeroconf
-(which is called Bonjour in the OSX / macOS world).
+(which is called Bonjour in the OS X / macOS world).
 
 Hint: this is still work-in-progress and growing fast.
 Please be patient if it does not immediately work out of the box.
@@ -34,14 +34,14 @@ See below for configuring. Since this logfile will be overwritten by every invoc
 
 ### Configuration
 
-**to be added - call zeroconf_lookup -h or check the source code - sorry I'm still working on it**
+**to be added - call `zeroconf_lookup -h` or check the source code - sorry I'm still working on it**
 
 
 # Installation
 
 For installing the *native host* program, see the INSTALL.md file in this directory.
 
-## Installation – Firefox and CHrome / Chromium WebExtension
+## Installation – Firefox and Chrome / Chromium WebExtension
 
 To install the *browser extension* search for **zeroconf** in the appropriate app stores.
 
