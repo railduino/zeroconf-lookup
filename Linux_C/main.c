@@ -33,7 +33,7 @@
 #include <poll.h>
 
 
-#define VERSION		"2.4.1"
+#define VERSION		"2.4.2"
 #define LOG_FILE	"/tmp/zeroconf_lookup.log"
 
 
@@ -174,7 +174,7 @@ main_send_result(char *source, int readable, result_t *result)
 
 	if (readable == 0) {
 		write(fileno(stdout), length.as_char, 4);
-	} else {
+	} else if (util_get_verbose() > 0) {
 		printf("==> %u bytes <==\n", length.as_uint);
 	}
 

@@ -44,7 +44,7 @@ project (zeroconf_lookup C)
 
 set (VERSION_MAJOR 2)
 set (VERSION_MINOR 4)
-set (VERSION_PATCH 1)
+set (VERSION_PATCH 2)
 set (VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 set (GOOGLE_TAG  gikfkgfjepbdpiljbieedpkcjikapbbg)

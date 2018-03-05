@@ -24,7 +24,7 @@
 # SOFTWARE.
 #
 
-VERSION := 2.4.1
+VERSION := 2.4.2
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -40,10 +40,13 @@ zeroconf_lookup: $(OBJS)
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: clean tags variables deb rpm
+.PHONY: clean wipe tags variables deb rpm
 
 clean:
 	rm -f zeroconf_lookup *.o tags
+
+wipe:
+	rm -f zeroconf_lookup *.o tags *.deb *.rpm
 
 tags:
 	ctags *.[ch]

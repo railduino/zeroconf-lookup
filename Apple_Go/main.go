@@ -18,7 +18,7 @@ import (
 
 const (
 	prgName  = "zeroconf_lookup"
-	prgVers  = "2.4.1"
+	prgVers  = "2.4.2"
 	apiVers  = 2
 	svcType  = "_http._tcp"
 	maniFest = "com.railduino.zeroconf_lookup"
@@ -131,7 +131,10 @@ func main() {
 
 	if *readable {
 		text := buffer.String()
-		fmt.Printf("==> %d bytes <==\n%s\n", len(text), text)
+		if *verbose {
+			fmt.Printf("==> %d bytes <==\n", len(text))
+		}
+		fmt.Println(text)
 	} else {
 		count := uint32(buffer.Len())
 		if err := binary.Write(os.Stdout, binary.LittleEndian, count); err != nil {

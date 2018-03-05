@@ -26,11 +26,13 @@
 
 VERSION := 2.4.1
 
-.PHONY: clean
+.PHONY: clean wipe
 
 clean:
-	rm -rf _build _install
-	rm -rf zeroconf_lookup-$(VERSION)
+	rm -rf _build _install zeroconf_lookup-$(VERSION)
+
+wipe:
+	rm -rf _build _install zeroconf_lookup*
 
 build: clean
 	mkdir -p _build
