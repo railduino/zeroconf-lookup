@@ -25,6 +25,7 @@
 #
 
 VERSION := 2.4.2
+ARCHIVE := zeroconf-lookup-$(VERSION)
 
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -43,9 +44,9 @@ zeroconf_lookup: $(OBJS)
 .PHONY: clean wipe tags variables deb rpm
 
 clean:
-	rm -f zeroconf_lookup *.o tags
+	rm -f zeroconf_lookup *.o tags $(ARCHIVE)
 
-wipe:
+wipe: clean
 	rm -f zeroconf_lookup *.o tags *.deb *.rpm
 
 tags:
@@ -56,6 +57,13 @@ install: zeroconf_lookup variables
 
 uninstall: zeroconf_lookup variables
 	./setup.sh uninstall
+
+archive: clean
+	rm -rf $(ARCHIVE)
+	mkdir -p $(ARCHIVE)
+	cp -v *.c *.h configure Makefile $(ARCHIVE)
+	tar cvzf $(ARCHIVE).tar.gz $(ARCHIVE)
+	rm -rf $(ARCHIVE)
 
 deb:
 	sudo rm -rf /tmp/fpm_zeroconf_lookup
