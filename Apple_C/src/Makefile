@@ -45,8 +45,9 @@ clean:
 	rm -f zeroconf_lookup *.o
 
 install: zeroconf_lookup
-	install -v zeroconf_lookup $(DESTDIR)$(prefix)/bin
-	$(DESTDIR)$(prefix)/bin/zeroconf_lookup -i
+	mkdir -p "$(DESTDIR)$(prefix)/bin"
+	install -v zeroconf_lookup "$(DESTDIR)$(prefix)/bin/zeroconf_lookup"
+	"$(DESTDIR)$(prefix)/bin/zeroconf_lookup" -i
 
 uninstall: zeroconf_lookup
 	./zeroconf_lookup -u
